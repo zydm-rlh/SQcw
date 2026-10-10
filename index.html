@@ -1,0 +1,2868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社区简易财务管理平台</title>
+<style>
+:root{
+  --bg:#f4f6fa; --card:#ffffff; --border:#e3e8f0; --border-2:#eef1f6;
+  --text:#1f2937; --muted:#6b7280; --muted-2:#9aa4b2;
+  --primary:#1d4ed8; --primary-soft:#eaf0fe;
+  --income:#c8102e; --income-soft:#fdecef;
+  --expense:#0f8a52; --expense-soft:#e9f7ef;
+  --gold:#a67c00;
+  --radius:12px;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 6px 18px -8px rgba(16,24,40,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Source Han Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:var(--bg); color:var(--text); font-size:14px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--primary);text-decoration:none}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  background:linear-gradient(135deg,#123a8f 0%,#1d4ed8 60%,#2f6feb 100%);
+  color:#fff; padding:0 22px; position:sticky; top:0; z-index:50;
+  box-shadow:0 2px 14px rgba(18,58,143,.22);
+}
+.topbar-inner{max-width:1320px;margin:0 auto;display:flex;align-items:center;gap:18px;height:62px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;font-size:17px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+.brand .logo{
+  width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.18);
+  display:grid;place-items:center;font-size:17px;border:1px solid rgba(255,255,255,.28)
+}
+.brand small{display:block;font-size:11px;font-weight:400;opacity:.78;letter-spacing:.6px}
+.community-tag{
+  font-size:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);
+  padding:3px 10px;border-radius:20px;white-space:nowrap
+}
+.nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.nav button{
+  color:rgba(255,255,255,.85);padding:8px 15px;border-radius:9px;font-size:13.5px;
+  transition:.18s; white-space:nowrap
+}
+.nav button:hover{background:rgba(255,255,255,.13);color:#fff}
+.nav button.active{background:#fff;color:var(--primary);font-weight:600;box-shadow:0 3px 10px -3px rgba(0,0,0,.28)}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);padding:4px 6px 4px 12px;border-radius:20px;color:#fff;font-size:13px;white-space:nowrap}
+.user-chip .role{font-size:11px;background:rgba(255,255,255,.2);padding:1px 8px;border-radius:10px}
+.user-chip button{color:#fff;background:rgba(255,255,255,.12);padding:4px 10px;border-radius:14px;font-size:12.5px}
+.user-chip button:hover{background:rgba(255,255,255,.24)}
+
+/* ---------- 布局 ---------- */
+.wrap{max-width:1320px;margin:0 auto;padding:22px}
+.view{display:none}
+.view.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card + .card{margin-top:18px}
+.card-head{
+  padding:15px 18px;border-bottom:1px solid var(--border-2);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap
+}
+.card-head h2{font-size:15px;font-weight:700;letter-spacing:.3px}
+.card-head .sub{font-size:12.5px;color:var(--muted)}
+.card-head .right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card-body{padding:18px}
+
+/* ---------- 通用控件 ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:9px;
+  border:1px solid var(--border);background:#fff;font-size:13.5px;font-weight:500;
+  transition:.16s; color:var(--text); white-space:nowrap
+}
+.btn:hover{border-color:#cbd5e1;background:#f8fafc}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:#1740b8;border-color:#1740b8}
+.btn-ghost{background:transparent}
+.btn-sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
+.btn-danger{color:#b91c1c;border-color:#f2c9c9;background:#fef5f5}
+.btn-danger:hover{background:#fdeaea;border-color:#e8a9a9}
+.link-btn{color:var(--primary);font-size:13px;padding:2px 6px;border-radius:6px}
+.link-btn:hover{background:var(--primary-soft)}
+.link-btn.del{color:#b91c1c}
+.link-btn.del:hover{background:#fdeaea}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12.5px;color:#475569;font-weight:600}
+.field label .req{color:#c8102e;margin-left:2px}
+.field .hint{font-size:11.5px;color:var(--muted-2)}
+input[type=text],input[type=number],input[type=date],input[type=month],select,textarea{
+  border:1px solid var(--border);border-radius:9px;padding:8px 11px;background:#fff;
+  transition:.16s;width:100%;outline:none
+}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(29,78,216,.10)}
+input::placeholder,textarea::placeholder{color:#c2c9d4}
+textarea{resize:vertical;min-height:62px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+/* ---------- 统计卡 ---------- */
+.stat-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.stat{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:17px 19px;box-shadow:var(--shadow);position:relative;overflow:hidden
+}
+.stat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.stat.in::after{background:var(--income)}
+.stat.ex::after{background:var(--expense)}
+.stat.bal::after{background:var(--primary)}
+.stat .lbl{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.stat .num{font-size:26px;font-weight:700;margin-top:8px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.stat.in .num{color:var(--income)}
+.stat.ex .num{color:var(--expense)}
+.stat.bal .num{color:var(--primary)}
+.stat .num.neg{color:var(--expense)}
+.stat .foot{font-size:12px;color:var(--muted-2);margin-top:6px}
+.stat .pill{
+  font-size:11px;padding:2px 8px;border-radius:20px;background:#f1f5f9;color:var(--muted);
+  border:1px solid var(--border)
+}
+
+/* ---------- 类目选择 ---------- */
+.cat-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.cat-opt{
+  border:1.5px solid var(--border);border-radius:11px;padding:13px 14px;background:#fff;
+  text-align:left;transition:.16s;position:relative
+}
+.cat-opt:hover{border-color:#b9c6f5;background:#fafbff}
+.cat-opt.on{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+.cat-opt .ic{font-size:18px;display:block;margin-bottom:5px}
+.cat-opt .nm{font-size:13.5px;font-weight:600}
+.cat-opt .ds{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.in-picker .cat-opt.on{border-color:var(--income);background:var(--income-soft);box-shadow:0 0 0 3px rgba(200,16,46,.07)}
+.ex-picker .cat-opt.on{border-color:var(--expense);background:var(--expense-soft);box-shadow:0 0 0 3px rgba(15,138,82,.07)}
+
+/* ---------- 表 ---------- */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  text-align:left;font-size:12px;font-weight:600;color:#475569;background:#f8fafc;
+  padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap
+}
+td{padding:10px 12px;border-bottom:1px solid var(--border-2);vertical-align:middle}
+tbody tr:hover{background:#fafbfe}
+tbody tr:last-child td{border-bottom:none}
+.num-cell{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;font-weight:600}
+.t-in{color:var(--income)}
+.t-ex{color:var(--expense)}
+.tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:6px;font-weight:500;white-space:nowrap}
+.tag.in{background:var(--income-soft);color:var(--income);border:1px solid #f6cdd5}
+.tag.ex{background:var(--expense-soft);color:var(--expense);border:1px solid #c6e7d5}
+.tag.gray{background:#f1f5f9;color:#475569;border:1px solid var(--border)}
+.empty{padding:44px 20px;text-align:center;color:var(--muted-2);font-size:13.5px}
+.empty .ic{font-size:32px;display:block;margin-bottom:10px;opacity:.55}
+
+/* ---------- 筛选条 ---------- */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.filters .field{min-width:130px}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{
+  font-size:12.5px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);
+  background:#fff;color:#475569;transition:.16s
+}
+.chip:hover{border-color:#b9c6f5;color:var(--primary)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+
+/* ---------- 汇总 ---------- */
+.sum-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.bar-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--border-2)}
+.bar-row:last-child{border-bottom:none}
+.bar-row .nm{width:132px;font-size:13px;flex-shrink:0}
+.bar-track{flex:1;height:9px;background:#f1f5f9;border-radius:20px;overflow:hidden;min-width:60px}
+.bar-fill{height:100%;border-radius:20px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bar-fill.in{background:linear-gradient(90deg,#e04a63,#c8102e)}
+.bar-fill.ex{background:linear-gradient(90deg,#3fb37c,#0f8a52)}
+.bar-row .vl{width:104px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:13px}
+.bar-row .pc{width:52px;text-align:right;font-size:12px;color:var(--muted-2)}
+.sum-total{
+  display:flex;justify-content:space-between;align-items:center;padding:13px 2px 0;margin-top:6px;
+  border-top:2px solid var(--border);font-weight:700
+}
+
+/* ---------- 公示报表 ---------- */
+.report-shell{background:#e9edf4;padding:22px;border-radius:var(--radius);border:1px solid var(--border)}
+.paper{
+  background:#fff;max-width:820px;margin:0 auto;padding:52px 60px 56px;
+  box-shadow:0 4px 26px -8px rgba(16,24,40,.22);border-radius:3px;
+  font-family:"Songti SC","SimSun","Source Han Serif SC",serif;color:#111;line-height:2
+}
+.paper h1{font-size:21px;text-align:center;font-weight:700;letter-spacing:1px;margin-bottom:8px;line-height:1.7}
+.paper .pre{text-indent:2em;margin:16px 0;font-size:15px}
+.paper h3{font-size:15.5px;font-weight:700;margin:22px 0 8px}
+.paper .li{text-indent:0;padding-left:2em;margin:4px 0;font-size:15px}
+.paper .li .money{font-weight:700;font-family:"Menlo","Consolas",monospace}
+.paper .sign{text-align:right;margin-top:44px;font-size:15px;line-height:2.1}
+.paper .note{font-size:14px}
+.paper .divider{border:none;border-top:1px solid #ddd;margin:22px 0}
+.paper table{font-family:inherit;font-size:13.5px}
+.paper th{background:#f7f7f7;color:#111;border:1px solid #ccc}
+.paper td{border:1px solid #ccc}
+.paper .appendix-title{text-align:center;font-weight:700;font-size:15.5px;margin:30px 0 12px}
+.report-toolbar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+
+/* ---------- 弹窗 ---------- */
+.mask{
+  position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(2px);
+  display:none;align-items:center;justify-content:center;z-index:200;padding:20px
+}
+.mask.on{display:flex}
+.modal{
+  background:#fff;border-radius:14px;width:100%;max-width:640px;max-height:88vh;overflow:auto;
+  box-shadow:0 22px 60px -12px rgba(15,23,42,.4)
+}
+.modal-head{padding:17px 20px;border-bottom:1px solid var(--border-2);display:flex;align-items:center}
+.modal-head h3{font-size:15.5px;font-weight:700}
+.modal-head .x{margin-left:auto;font-size:20px;color:var(--muted-2);line-height:1;padding:0 4px}
+.modal-body{padding:20px}
+.modal-foot{padding:15px 20px;border-top:1px solid var(--border-2);display:flex;gap:10px;justify-content:flex-end}
+
+/* ---------- 登录 ---------- */
+.login-mask{position:fixed;inset:0;background:linear-gradient(135deg,#0f1f4d 0%,#1d4ed8 70%,#2f6feb 100%);display:none;align-items:center;justify-content:center;z-index:500}
+.login-mask.on{display:flex}
+.login-card{background:#fff;border-radius:16px;padding:34px 36px;width:370px;max-width:92vw;box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+.login-card h1{font-size:18px;text-align:center;margin-bottom:4px;letter-spacing:.5px}
+.login-card .sub{text-align:center;color:var(--muted);font-size:12.5px;margin-bottom:18px}
+
+/* ---------- 类目 / 字段管理 ---------- */
+.cat-card{border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:12px;background:#fff}
+.cat-card .top{display:flex;align-items:center;gap:10px}
+.cat-card .ic{font-size:20px}
+.cat-card .nm{font-weight:700;font-size:14px}
+.cat-card .ds{font-size:12px;color:var(--muted);margin:7px 0 4px}
+.field-list{margin:6px 0 2px}
+.field-list .row{display:flex;gap:10px;align-items:center;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--border-2)}
+.field-list .row .k{font-family:monospace;font-size:12px;color:var(--primary);background:var(--primary-soft);padding:1px 7px;border-radius:6px;white-space:nowrap}
+.field-list .row .t{color:var(--muted-2);font-size:11.5px;margin-left:auto}
+.field-row{display:grid;grid-template-columns:1.3fr 1fr 1fr .7fr 1.3fr auto;gap:8px;align-items:end;padding:8px 0;border-bottom:1px dashed var(--border-2)}
+.field-row .field{margin:0}
+.role-tag{font-size:11px;padding:2px 9px;border-radius:10px}
+.role-tag.admin{background:var(--primary-soft);color:var(--primary)}
+.role-tag.staff{background:var(--expense-soft);color:var(--expense)}
+
+/* ---------- 提示 ---------- */
+.toast-wrap{position:fixed;top:76px;right:22px;z-index:400;display:flex;flex-direction:column;gap:9px}
+.toast{
+  background:#fff;border:1px solid var(--border);border-left:4px solid var(--primary);
+  border-radius:10px;padding:11px 16px;font-size:13.5px;box-shadow:0 10px 30px -10px rgba(15,23,42,.3);
+  animation:slide .28s cubic-bezier(.4,0,.2,1);min-width:200px
+}
+.toast.ok{border-left-color:var(--expense)}
+.toast.err{border-left-color:var(--income)}
+@keyframes slide{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+
+.muted{color:var(--muted)}
+.mono{font-family:"Menlo","Consolas",monospace;font-variant-numeric:tabular-nums}
+.mt8{margin-top:8px}.mt14{margin-top:14px}.mt18{margin-top:18px}.mt22{margin-top:22px}
+.hr{height:1px;background:var(--border-2);margin:18px 0}
+.flex{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge-note{
+  font-size:12.5px;color:#7a5b00;background:#fff8e1;border:1px solid #f2e0a8;
+  border-radius:9px;padding:9px 13px;line-height:1.6
+}
+.quick-amt{display:flex;gap:7px;flex-wrap:wrap}
+.quick-amt button{font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:20px;color:#475569}
+.quick-amt button:hover{border-color:#b9c6f5;color:var(--primary);background:#f7f9ff}
+
+/* ---------- 专项账户 ---------- */
+.acc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px}
+.acc-grid-3{grid-template-columns:repeat(3,1fr)}
+.acc-card{position:relative;border:1px solid var(--border);border-radius:14px;padding:16px 18px 16px 22px;background:#fff;overflow:hidden}
+.acc-card .top{display:flex;align-items:center;gap:10px}
+.acc-card .ic{font-size:22px}
+.acc-card .nm{font-weight:700;font-size:14.5px}
+.acc-card .ds{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;min-height:34px}
+.acc-card .bal{font-size:24px;font-weight:800;margin-top:10px;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.acc-card .sub{display:flex;gap:14px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.acc-card .sub b{font-variant-numeric:tabular-nums}
+.acc-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--border-2)}
+.acc-row:last-child{border-bottom:none}
+.acc-row .nm{width:172px;font-size:13px;flex-shrink:0;display:flex;align-items:center;gap:7px}
+.acc-row .vl{width:96px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:13px}
+.acc-row .bal{width:120px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px}
+
+@media print{
+  body{background:#fff}
+  body>*{display:none !important}
+  #printArea{display:block !important}
+  #printArea .paper{box-shadow:none;max-width:none;padding:0;margin:0}
+}
+#printArea{display:none}
+@media (max-width:1040px){
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cat-picker{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sum-grid{grid-template-columns:1fr}
+  .field-row{grid-template-columns:1fr 1fr;gap:8px}
+  .acc-grid-3{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:760px){
+  .stat-row{grid-template-columns:1fr}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .cat-picker{grid-template-columns:1fr}
+  .acc-grid-3{grid-template-columns:1fr}
+  .paper{padding:28px 20px}
+  .nav{width:100%;margin-left:0}
+  .user-chip{order:3}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 登录 ============ -->
+<div class="login-mask" id="loginMask">
+  <div class="login-card">
+    <div style="font-size:34px;text-align:center">🏘️</div>
+    <h1>社区简易财务管理平台</h1>
+    <div class="sub">请登录后使用 · 记账 / 汇总 / 公示</div>
+    <div class="field"><label>账号</label><input type="text" id="loginUser" placeholder="如：admin" autocomplete="username"></div>
+    <div class="field mt14"><label>密码</label><input type="password" id="loginPass" placeholder="请输入密码" autocomplete="current-password"></div>
+    <button class="btn btn-primary" id="loginBtn" style="width:100%;margin-top:18px;justify-content:center">登 录</button>
+    <div class="badge-note mt14">
+      默认账号：管理员 <b>admin / admin888</b>　业务员 <b>yewu / yewu888</b><br>
+      管理员可管理类目、自定义字段与账号；业务员可记账、查询、汇总与生成公示报表。
+    </div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="logo">🏘️</span>
+      <span>社区简易财务管理平台<small>记账 · 汇总 · 明细可查 · 季度公示</small></span>
+    </div>
+    <span class="community-tag" id="tagCommunity">XX 社区</span>
+    <nav class="nav" id="nav">
+      <button data-view="dashboard" class="active">首页总览</button>
+      <button data-view="income">收入记账</button>
+      <button data-view="expense">支出记账</button>
+      <button data-view="detail">明细查询</button>
+      <button data-view="report">季度公示报表</button>
+      <button data-view="asset">固定资产台账</button>
+      <button data-view="setting">系统设置</button>
+    </nav>
+    <div class="user-chip" id="userChip" style="display:none">
+      <span id="userName">—</span>
+      <span class="role" id="userRole">—</span>
+      <button id="btnLogout">退出</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ 首页总览 ============ -->
+  <section class="view active" id="view-dashboard">
+    <div class="card">
+      <div class="card-head">
+        <h2>财务总览</h2>
+        <span class="sub" id="dashRangeText">全部账目</span>
+        <div class="right">
+          <div class="chips" id="dashPeriod">
+            <button class="chip on" data-period="all">全部</button>
+            <button class="chip" data-period="year">本年</button>
+            <button class="chip" data-period="quarter">本季度</button>
+            <button class="chip" data-period="month">本月</button>
+            <button class="chip" data-period="day">今日</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="stat-row">
+          <div class="stat in">
+            <div class="lbl">💰 总收入　<span class="pill" id="dashInCount">0 笔</span></div>
+            <div class="num" id="dashIn">¥0.00</div>
+            <div class="foot" id="dashInFoot"></div>
+          </div>
+          <div class="stat ex">
+            <div class="lbl">🧾 总支出　<span class="pill" id="dashExCount">0 笔</span></div>
+            <div class="num" id="dashEx">¥0.00</div>
+            <div class="foot" id="dashExFoot"></div>
+          </div>
+          <div class="stat bal">
+            <div class="lbl">📊 当期结余（自动核算）</div>
+            <div class="num" id="dashBal">¥0.00</div>
+            <div class="foot">结余 = 当期总收入 － 当期总支出</div>
+          </div>
+        </div>
+
+        <div class="sum-grid mt22">
+          <div>
+            <div class="flex" style="justify-content:space-between">
+              <strong style="font-size:13.5px;color:var(--income)">收入构成（分科目）</strong>
+              <span class="muted" style="font-size:12px" id="dashInTotalMini"></span>
+            </div>
+            <div class="mt8" id="dashInBars"></div>
+          </div>
+          <div>
+            <div class="flex" style="justify-content:space-between">
+              <strong style="font-size:13.5px;color:var(--expense)">支出构成（分科目）</strong>
+              <span class="muted" style="font-size:12px" id="dashExTotalMini"></span>
+            </div>
+            <div class="mt8" id="dashExBars"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>专项账户结余概览</h2>
+        <span class="sub">专款专用 · 分账户实时核算</span>
+      </div>
+      <div class="card-body"><div class="acc-grid" id="dashAccounts"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>各账户收支与余额</h2><span class="sub">条形可视化 · 红为收入、绿为支出、蓝为余额</span></div>
+      <div class="card-body" id="dashAccountBars"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>账户最近流水</h2>
+        <span class="sub">选择账户查看其收支明细</span>
+        <div class="right"><select id="dashAccFlowSel"></select></div>
+      </div>
+      <div class="tbl-wrap" id="dashAccountFlow"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>收支分科目汇总</h2>
+        <span class="sub">按科目自动汇总、自动核算结余，改账后实时更新</span>
+      </div>
+      <div class="card-body">
+        <div class="sum-grid">
+          <div class="card" style="margin-top:0"><div class="card-head"><h2>收入分科目汇总</h2></div>
+            <div class="card-body" id="dashIncomeSummary"></div>
+          </div>
+          <div class="card" style="margin-top:0"><div class="card-head"><h2>支出分科目汇总</h2></div>
+            <div class="card-body" id="dashExpenseSummary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>最近账目</h2>
+        <span class="sub">按录入时间倒序展示最新 10 条</span>
+        <div class="right">
+          <button class="btn btn-sm" id="dashGotoDetail">查看全部明细 →</button>
+        </div>
+      </div>
+      <div class="tbl-wrap" id="dashRecent"></div>
+    </div>
+  </section>
+
+  <!-- ============ 收入记账 ============ -->
+  <section class="view" id="view-income">
+    <div class="card">
+      <div class="card-head">
+        <h2>收入录入</h2>
+        <span class="sub">选择收入类目后，按该类目自定义字段填写</span>
+        <div class="right"><button class="btn btn-sm" id="incImport">⬆ 批量导入</button></div>
+      </div>
+      <div class="card-body">
+        <div class="cat-picker in-picker" id="incomeCatPicker"></div>
+        <div class="hr"></div>
+        <form id="incomeForm">
+          <div class="grid g3" id="incomeFields"></div>
+          <div class="hr"></div>
+          <div class="grid g3">
+            <div class="field">
+              <label>入账日期<span class="req">*</span></label>
+              <input type="date" name="date" id="incDate" required>
+            </div>
+            <div class="field">
+              <label>金额（元）<span class="req">*</span></label>
+              <input type="number" name="amount" id="incAmount" step="0.01" min="0" placeholder="0.00" required>
+              <div class="quick-amt mt8">
+                <button type="button" data-add="100">+100</button>
+                <button type="button" data-add="500">+500</button>
+                <button type="button" data-add="1000">+1000</button>
+                <button type="button" data-add="5000">+5000</button>
+                <button type="button" data-clr="1">清零</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>经办人<span class="req">*</span></label>
+              <input type="text" name="operator" id="incOperator" placeholder="如：李主任" required>
+            </div>
+          </div>
+          <div class="flex mt18">
+            <button type="submit" class="btn btn-primary">✔ 保存收入账目</button>
+            <button type="reset" class="btn">重置表单</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>本类目最近记录</h2>
+        <span class="sub" id="incomeRecentTitle"></span>
+      </div>
+      <div class="tbl-wrap" id="incomeRecent"></div>
+    </div>
+  </section>
+
+  <!-- ============ 支出记账 ============ -->
+  <section class="view" id="view-expense">
+    <div class="card">
+      <div class="card-head">
+        <h2>支出录入</h2>
+        <span class="sub">选择支出类目后，按该类目自定义字段 + 通用字段填写</span>
+        <div class="right"><button class="btn btn-sm" id="expImport">⬆ 批量导入</button></div>
+      </div>
+      <div class="card-body">
+        <div class="cat-picker ex-picker" id="expenseCatPicker"></div>
+        <div class="hr"></div>
+        <form id="expenseForm">
+          <div class="grid g3">
+            <div class="field">
+              <label>支出日期<span class="req">*</span></label>
+              <input type="date" name="date" id="expDate" required>
+            </div>
+            <div class="field">
+              <label>支出金额（元）<span class="req">*</span></label>
+              <input type="number" name="amount" id="expAmount" step="0.01" min="0" placeholder="0.00" required>
+              <div class="quick-amt mt8">
+                <button type="button" data-add="100">+100</button>
+                <button type="button" data-add="500">+500</button>
+                <button type="button" data-add="1000">+1000</button>
+                <button type="button" data-add="5000">+5000</button>
+                <button type="button" data-clr="1">清零</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>票据编号</label>
+              <input type="text" name="voucher" id="expVoucher" placeholder="如：FP20260712-01">
+            </div>
+          </div>
+          <div class="grid g3 mt14" id="expenseMetaFields"></div>
+          <div class="grid g2 mt14">
+            <div class="field">
+              <label>列支专项账户<span class="req">*</span></label>
+              <select id="expAccount" required></select>
+              <div class="muted mt8" id="expAccountInfo" style="font-size:12.5px;line-height:1.7"></div>
+            </div>
+            <div class="field">
+              <label>关联支出科目<span class="req">*</span></label>
+              <select id="expLinkedCat" required></select>
+              <div class="muted mt8" id="expLinkedCatInfo" style="font-size:12.5px;line-height:1.7"></div>
+            </div>
+          </div>
+          <div class="grid g2 mt14">
+            <div class="field">
+              <label>用途说明<span class="req">*</span></label>
+              <input type="text" name="purpose" id="expPurpose" placeholder="如：打印复印纸、文具采购" required>
+            </div>
+            <div class="field">
+              <label>经办人<span class="req">*</span></label>
+              <input type="text" name="operator" id="expOperator" placeholder="如：王会计" required>
+            </div>
+          </div>
+          <div class="grid g1 mt14">
+            <div class="field">
+              <label>备注</label>
+              <textarea name="remark" id="expRemark" placeholder="选填，如：经社区“两委”会议研究同意"></textarea>
+            </div>
+          </div>
+          <div class="flex mt18">
+            <button type="submit" class="btn btn-primary">✔ 保存支出账目</button>
+            <button type="reset" class="btn">重置表单</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>本类目最近记录</h2>
+        <span class="sub" id="expenseRecentTitle"></span>
+      </div>
+      <div class="tbl-wrap" id="expenseRecent"></div>
+    </div>
+  </section>
+
+  <!-- ============ 明细查询 ============ -->
+  <section class="view" id="view-detail">
+    <div class="card">
+      <div class="card-head">
+        <h2>明细查询</h2>
+        <span class="sub">支持关键词搜索、按日 / 月 / 季度 / 年筛选，逐条可导出、可打印</span>
+      </div>
+      <div class="card-body">
+        <div class="filters">
+          <div class="field" style="min-width:220px">
+            <label>关键词搜索</label>
+            <input type="text" id="fKeyword" placeholder="日期 / 金额 / 经办人 / 用途 / 单位 / 票据号…">
+          </div>
+          <div class="field">
+            <label>收支类型</label>
+            <select id="fType">
+              <option value="">全部</option>
+              <option value="income">收入</option>
+              <option value="expense">支出</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>类目</label>
+            <select id="fCategory"><option value="">全部类目</option></select>
+          </div>
+          <div class="field">
+            <label>开始日期</label>
+            <input type="date" id="fFrom">
+          </div>
+          <div class="field">
+            <label>结束日期</label>
+            <input type="date" id="fTo">
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn" id="fReset">重置筛选</button>
+          </div>
+        </div>
+        <div class="chips mt14" id="quickRange">
+          <button class="chip" data-q="day">今日</button>
+          <button class="chip" data-q="month">本月</button>
+          <button class="chip" data-q="quarter">本季度</button>
+          <button class="chip" data-q="year">本年</button>
+          <button class="chip on" data-q="all">全部</button>
+        </div>
+        <div class="hr"></div>
+        <div class="flex" style="justify-content:space-between">
+          <div class="flex" style="gap:16px">
+            <span class="muted" style="font-size:13px">共 <b id="dCount">0</b> 条，收入 <b class="t-in" id="dSumIn">¥0.00</b>，支出 <b class="t-ex" id="dSumEx">¥0.00</b></span>
+          </div>
+          <div class="flex">
+            <button class="btn btn-sm" id="dImport">⬆ 导入明细</button>
+            <button class="btn btn-sm" id="dExport">⬇ 导出 CSV</button>
+            <button class="btn btn-sm" id="dPrint">🖨 打印明细</button>
+          </div>
+        </div>
+      </div>
+      <div class="tbl-wrap" id="detailTable"></div>
+    </div>
+  </section>
+
+  <!-- ============ 季度公示报表 ============ -->
+  <section class="view" id="view-report">
+    <div class="card no-print">
+      <div class="card-head">
+        <h2>季度财务公示报表</h2>
+        <span class="sub">一键生成标准化公示报表，可直接张贴、公众号公示、台账上报</span>
+      </div>
+      <div class="card-body">
+        <div class="report-toolbar">
+          <div class="field">
+            <label>年份</label>
+            <select id="rpYear"></select>
+          </div>
+          <div class="field">
+            <label>季度</label>
+            <select id="rpQuarter">
+              <option value="1">第一季度（1-3 月）</option>
+              <option value="2">第二季度（4-6 月）</option>
+              <option value="3">第三季度（7-9 月）</option>
+              <option value="4">第四季度（10-12 月）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>附账目明细表</label>
+            <select id="rpAppendix">
+              <option value="0">不附</option>
+              <option value="1">附本季度收支明细表</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="rpGenerate">📄 生成公示报表</button>
+          <button class="btn" id="rpCopy">📋 复制文字版</button>
+          <button class="btn" id="rpPrint">🖨 打印 / 存 PDF</button>
+        </div>
+        <div class="badge-note mt14">
+          报表金额取自平台内该季度的记账数据（按入账 / 支出日期归集），类目顺序与公示口径按照当前配置的类目生成。
+        </div>
+      </div>
+    </div>
+
+    <div class="report-shell mt18" id="reportShell">
+      <div class="paper" id="reportPaper">
+        <div style="text-align:center;color:#9aa4b2;padding:60px 0">请选择年份与季度后点击「生成公示报表」</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 系统设置（管理员） ============ -->
+  <section class="view" id="view-setting">
+    <div class="card">
+      <div class="card-head"><h2>基础信息</h2><span class="sub">用于生成公示报表的落款与社区名称</span></div>
+      <div class="card-body">
+        <div class="grid g3">
+          <div class="field"><label>社区名称</label><input type="text" id="stName" placeholder="如：幸福社区"></div>
+          <div class="field"><label>落款单位</label><input type="text" id="stSigner" placeholder="如：XX 社区居委会"></div>
+          <div class="field"><label>公示期（天）</label><input type="number" id="stDays" min="1" value="7"></div>
+        </div>
+        <div class="flex mt18">
+          <button class="btn btn-primary" id="stSave">保存设置</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>类目与字段管理</h2>
+        <span class="sub">管理员可增删类目，并为每个类目定义专属记账字段</span>
+      </div>
+      <div class="card-body">
+        <h3 style="font-size:14px;margin-bottom:6px">收入类目</h3>
+        <div id="catIncomeList"></div>
+        <button class="btn btn-sm mt8" id="catAddIncome">＋ 新增收入类目</button>
+
+        <h3 style="font-size:14px;margin:18px 0 6px">支出类目</h3>
+        <div id="catExpenseList"></div>
+        <button class="btn btn-sm mt8" id="catAddExpense">＋ 新增支出类目</button>
+
+        <div class="badge-note mt14">
+          类目字段用于记账录入：收入类目通常含「拨款单位 / 资金用途」等；支出类目默认带「用途说明 / 票据编号 / 经办人 / 备注」通用字段，
+          你还可为任意类目追加自定义字段（如：报销人、项目、合同号等）。删除类目不会影响已有账目，仅不再作为可选项。
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>专项账户管理</h2>
+        <span class="sub">按专款专用原则设立专项资金账户（公共账户不可删除）</span>
+        <div class="right"><button class="btn btn-sm btn-primary" id="accAdd">＋ 新增专项账户</button></div>
+      </div>
+      <div class="card-body" id="accList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>账号管理</h2>
+        <span class="sub">管理员可创建业务员 / 管理员账号，控制使用权限</span>
+        <div class="right"><button class="btn btn-sm btn-primary" id="btnAddUser">＋ 新增账号</button></div>
+      </div>
+      <div class="card-body">
+        <div class="tbl-wrap" id="userTable"></div>
+        <div class="badge-note mt14">
+          <b>权限说明：</b>管理员拥有全部权限（记账、查询、汇总、公示、管理类目 / 字段 / 账号 / 设置）；
+          业务员仅可记账、查看明细、查看汇总、生成与打印公示报表，不可删除 / 清空账目、不可管理类目与账号。
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>数据管理</h2><span class="sub">账目保存在本机浏览器中，永久留存、可随时备份</span></div>
+      <div class="card-body">
+        <div class="flex">
+          <button class="btn" id="dmExport">⬇ 导出全部数据（JSON 备份）</button>
+          <button class="btn" id="dmImport">⬆ 导入备份</button>
+          <input type="file" id="dmFile" accept=".json" style="display:none">
+          <button class="btn" id="dmDemo">🧪 载入演示数据</button>
+          <button class="btn btn-danger" id="dmClear">🗑 清空全部账目</button>
+        </div>
+        <div class="hr"></div>
+        <div class="muted" style="font-size:13px" id="dmStat">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 固定资产台账 ============ -->
+  <section class="view" id="view-asset">
+    <div class="card">
+      <div class="card-head">
+        <h2>固定资产台账</h2>
+        <span class="sub">登记社区固定资产：资产名称、类目、购置日期 / 金额、存放地点、保管人、状态</span>
+        <div class="right"><button class="btn btn-sm" id="assetImport">⬆ 导入资产</button><button class="btn btn-sm btn-primary" id="assetAddBtn">＋ 新增资产</button></div>
+      </div>
+      <div class="card-body">
+        <div class="stat-row" id="assetStats"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2 id="assetFormTitle">新增固定资产</h2>
+        <span class="sub" id="assetFormHint">带 * 为必填项；编辑时点击下方列表的「编辑」可回填本表单</span>
+      </div>
+      <div class="card-body">
+        <form id="assetForm">
+          <div class="grid g3">
+            <div class="field">
+              <label>资产名称<span class="req">*</span></label>
+              <input type="text" id="asName" placeholder="如：台式计算机" required>
+            </div>
+            <div class="field">
+              <label>资产类目<span class="req">*</span></label>
+              <select id="asCat" required></select>
+            </div>
+            <div class="field">
+              <label>规格型号</label>
+              <input type="text" id="asSpec" placeholder="如：联想 / i5 / 16G">
+            </div>
+          </div>
+          <div class="grid g3 mt14">
+            <div class="field">
+              <label>购置日期<span class="req">*</span></label>
+              <input type="date" id="asDate" required>
+            </div>
+            <div class="field">
+              <label>购置金额（元）<span class="req">*</span></label>
+              <input type="number" step="0.01" min="0" id="asAmount" placeholder="0.00" required>
+            </div>
+            <div class="field">
+              <label>资金来源（关联收入类目）</label>
+              <select id="asSource"><option value="">— 不关联 —</option></select>
+            </div>
+          </div>
+          <div class="grid g3 mt14">
+            <div class="field">
+              <label>存放地点<span class="req">*</span></label>
+              <input type="text" id="asLoc" placeholder="如：党群服务中心 2 楼">
+            </div>
+            <div class="field">
+              <label>保管人 / 责任人<span class="req">*</span></label>
+              <input type="text" id="asCustodian" placeholder="如：王会计">
+            </div>
+            <div class="field">
+              <label>状态</label>
+              <select id="asStatus">
+                <option value="在用">在用</option>
+                <option value="闲置">闲置</option>
+                <option value="报废">报废</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid g1 mt14">
+            <div class="field">
+              <label>备注</label>
+              <textarea id="asRemark" placeholder="选填，如：2026 年上级拨款购置"></textarea>
+            </div>
+          </div>
+          <div class="flex mt18">
+            <button type="submit" class="btn btn-primary">✔ 保存资产</button>
+            <button type="reset" class="btn" id="assetReset">重置表单</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>资产明细</h2>
+        <div class="right"><button class="btn btn-sm" id="assetExport">⬇ 导出 CSV</button></div>
+      </div>
+      <div class="card-body">
+        <div class="tbl-wrap" id="assetTable"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- 编辑 / 类目 / 账号 弹窗 -->
+<div class="mask" id="modalMask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">编辑账目</h3>
+      <button class="x" id="modalClose">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn" id="modalCancel">取消</button>
+      <button class="btn btn-primary" id="modalSave">保存修改</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<div id="printArea"></div>
+
+<script>
+/* =========================================================
+   社区简易财务管理平台  —  纯前端 · 数据存本机 localStorage
+   功能：账号权限（管理员/业务员）、类目与字段可自定义、汇总、公示
+   ========================================================= */
+
+const LS_KEY = 'community_finance_platform_v2';
+
+/* ---------- 默认类目（首次运行写入，之后可在系统设置中自定义） ---------- */
+function DEFAULT_CATS(type){
+  if(type==='income'){
+    return [
+      { name:'上级拨款收入', icon:'🏛️',
+        desc:'街道、乡镇、政府各部门下发的各类工作经费、专项补贴、活动经费、帮扶资金、办公补助等',
+        reportDesc:'本季度累计到账款项',
+        meta:[
+          {key:'unit',    label:'拨款单位',    type:'text',   required:true,  ph:'如：XX街道办事处'},
+          {key:'purpose', label:'资金用途',    type:'text',   required:true,  ph:'如：社区工作经费 / 专项补贴'},
+          {key:'voucher', label:'票据/凭证备注', type:'text', required:false, ph:'如：财政拨款单 No.2026-015'}
+        ] },
+      { name:'卫生费征收收入', icon:'🧹',
+        desc:'辖区内居民、商户缴纳的环境卫生服务费、垃圾处理费等常规卫生收费',
+        reportDesc:'本季度居民、商户卫生收费总额',
+        meta:[
+          {key:'payer',  label:'缴费对象', type:'select', required:true, options:['居民','商户','居民+商户']},
+          {key:'houses', label:'缴费户数', type:'number', required:false, ph:'如：186'},
+          {key:'note',   label:'备注',     type:'select', required:false, options:['正常缴费','欠费补缴','部分补缴']}
+        ] },
+      { name:'小厅堂场地使用费收入', icon:'🏠',
+        desc:'社区党群小厅堂、活动室、会议室、露天场地等对外临时出租、借用收取的场地使用费',
+        reportDesc:'本季度场地租赁收费总额',
+        meta:[
+          {key:'renter',  label:'租赁个人/单位', type:'text',   required:true,  ph:'如：XX文化传媒公司 / 居民张某'},
+          {key:'usage',   label:'使用用途',      type:'text',   required:true,  ph:'如：会议培训 / 婚庆活动'},
+          {key:'duration',label:'租赁时长',      type:'text',   required:false, ph:'如：3 天 / 半天'}
+        ] },
+      { name:'光伏收入', icon:'☀️',
+        desc:'社区光伏设备发电产生的电费收益、光伏专项补贴等全部光伏相关收入',
+        reportDesc:'本季度光伏发电收益总额',
+        meta:[
+          {key:'period', label:'收益结算月份', type:'month', required:false},
+          {key:'cycle',  label:'发电周期',     type:'text',   required:false, ph:'如：2026 年 6 月 1 日 - 6 月 30 日'},
+          {key:'note',   label:'备注',         type:'text',   required:false, ph:'如：含光伏专项补贴'}
+        ] }
+    ];
+  }
+  return [
+    { name:'办公费支出', icon:'📎', desc:'打印复印费、纸张文具、办公用品采购、档案耗材、电脑配件、宣传物料、横幅海报、台账资料制作等',
+      reportDesc:'日常办公用品、宣传物料、耗材采购等开支', meta:[] },
+    { name:'水电费支出', icon:'💡', desc:'党群服务中心、小厅堂、公共活动室、公共区域的电费、水费、公摊水电费等',
+      reportDesc:'社区公共区域水电开支', meta:[] },
+    { name:'零工维修费支出', icon:'🔧', desc:'公共设施维修、场地修补、水电维修、器材检修、环境卫生零工工资、临时务工补贴、零星维修人工及材料',
+      reportDesc:'设施维修、临时务工、零星修缮开支', meta:[] },
+    { name:'其他零星支出', icon:'📌', desc:'兜底类目：卫生消杀物资、便民服务耗材、活动小额杂费、应急零星开支等',
+      reportDesc:'各类小额便民、应急杂费开支', meta:[] }
+  ];
+}
+/* ---------- 默认专项账户（专款专用） ---------- */
+function DEFAULT_ACCOUNTS(){
+  return [
+    {key:'sanitation', name:'环卫专项账户', icon:'🧹', color:'#0f8a52', desc:'上级拨款中用于环境卫生、环卫作业、消杀保洁的专项资金', keywords:['环卫','保洁','消杀','卫生','环境','垃圾','绿化','清扫','公厕']},
+    {key:'party',      name:'党建经费专项账户', icon:'🚩', color:'#c8102e', desc:'上级拨款中用于党建活动、组织建设、党员教育的专项资金', keywords:['党建','组织','党员','党群','主题党日','廉政','纪检','红色']},
+    {key:'culture',    name:'文化活动专项账户', icon:'🎭', color:'#7c3aed', desc:'上级拨款中用于文化惠民、群众文体活动的专项资金', keywords:['文化','文体','文艺','活动','节日','演出','宣传','科普','体育','书画','惠民']}
+  ];
+}
+/* ---------- 默认账号 ---------- */
+function DEFAULT_USERS(){
+  return [
+    { username:'admin', password:'admin888', role:'admin', name:'管理员' },
+    { username:'yewu',  password:'yewu888',  role:'staff', name:'业务员' }
+  ];
+}
+
+/* ---------- 状态 ---------- */
+let state = {
+  records: [],
+  assets: [],
+  settings: { name:'XX 社区', signer:'XX 社区居委会', days:7 },
+  users: DEFAULT_USERS(),
+  categories: { income: DEFAULT_CATS('income'), expense: DEFAULT_CATS('expense') },
+  accounts: DEFAULT_ACCOUNTS(),
+  session: null
+};
+const ASSET_CATS = ['办公设备','家具用具','电子设备','文体器材','宣传设施','其他'];
+let ui = {
+  incomeCat: '上级拨款收入',
+  expenseCat: '办公费支出',
+  dashPeriod: 'all',
+  detailQuick: 'all',
+  editingId: null,
+  editType: 'income',
+  editCat: '',
+  editCatType: 'income',
+  editCatName: '',
+  editingAssetId: null
+};
+
+/* ===================== 权限 ===================== */
+function currentUser(){ return state.users.find(x=>x.username===state.session); }
+function isAdmin(){ const u=currentUser(); return !!(u && u.role==='admin'); }
+function can(perm){
+  const u=currentUser();
+  if(!u) return false;
+  if(u.role==='admin') return true;
+  return ['add','view','export','report'].includes(perm);   // 业务员权限
+}
+function applyRoleUI(){
+  const u=currentUser();
+  if(!u){ $('#userChip').style.display='none'; return; }
+  $('#userChip').style.display='flex';
+  $('#userName').textContent = u.name;
+  $('#userRole').textContent = u.role==='admin'?'管理员':'业务员';
+  $$('#nav button').forEach(b=>{
+    if(b.dataset.view==='setting') b.style.display = u.role==='admin' ? '' : 'none';
+  });
+}
+
+/* ---------- 工具函数 ---------- */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const pad = n => String(n).padStart(2,'0');
+const todayStr = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const money = n => '¥' + Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const moneyRaw = n => Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num2 = n => Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function quarterOf(dateStr){
+  const d = new Date(dateStr);
+  if(isNaN(d)) return 0;
+  return Math.floor(d.getMonth()/3)+1;
+}
+function rangeOf(period){
+  const d = new Date(); const y=d.getFullYear();
+  if(period==='day')     return {from:todayStr(), to:todayStr(), label:`今日（${todayStr()}）`};
+  if(period==='month'){  const from=`${y}-${pad(d.getMonth()+1)}-01`; const last=new Date(y,d.getMonth()+1,0);
+                         return {from, to:`${y}-${pad(d.getMonth()+1)}-${pad(last.getDate())}`, label:`本月（${y} 年 ${d.getMonth()+1} 月）`}; }
+  if(period==='quarter'){const q=quarterOf(todayStr()); return {...quarterRange(y,q), label:`本季度（${y} 年第 ${q} 季度）`};}
+  if(period==='year')    return {from:`${y}-01-01`, to:`${y}-12-31`, label:`本年（${y} 年）`};
+  return {from:'', to:'', label:'全部账目'};
+}
+function quarterRange(y,q){
+  const m0=(q-1)*3+1, m1=q*3;
+  const last=new Date(y,m1,0);
+  return {from:`${y}-${pad(m0)}-01`, to:`${y}-${pad(m1)}-${pad(last.getDate())}`};
+}
+const inRange = (rec,f,t) => (!f||rec.date>=f) && (!t||rec.date<=t);
+const sumOf = arr => arr.reduce((s,r)=>s+Number(r.amount||0),0);
+
+/* ---------- 类目读取 ---------- */
+function getCats(type){ return type==='income' ? state.categories.income : state.categories.expense; }
+function catByName(type,name){
+  const list = getCats(type);
+  return list.find(c=>c.name===name) || {name:name||'', icon:'📁', desc:'', meta:[]};
+}
+function reportDescOf(cat){ return (cat && (cat.reportDesc||cat.desc)) || ''; }
+
+/* ---------- 专项账户（专款专用） ---------- */
+function DEFAULT_ACCOUNTS_REF(){ return DEFAULT_ACCOUNTS(); }
+function allAccounts(){
+  return [{key:'public', name:'公共账户', icon:'🏦', color:'#1d4ed8', desc:'社区公共资金，收纳非专项拨款收入及公共收入，用于日常运营'}]
+    .concat(state.accounts||[]);
+}
+function getAccount(key){
+  return allAccounts().find(a=>a.key===key) || {key:'public', name:'公共账户', icon:'🏦', color:'#1d4ed8', desc:''};
+}
+function getAccountByName(name){
+  if(!name) return null;
+  return allAccounts().find(a=>a.name===name) || null;
+}
+function accountIncome(key){ return sumOf(state.records.filter(r=>r.type==='income'&&r.account===key)); }
+function accountExpense(key){ return sumOf(state.records.filter(r=>r.type==='expense'&&r.account===key)); }
+function accountBalance(key){ return accountIncome(key) - accountExpense(key); }
+
+/* ---------- 存储 ---------- */
+function save(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    refreshDmStat();
+  }catch(e){ toast('保存失败：本机存储空间不足','err'); }
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      state.records = Array.isArray(d.records)?d.records:[];
+      state.assets  = Array.isArray(d.assets)?d.assets:[];
+      state.settings = Object.assign({name:'XX 社区',signer:'XX 社区居委会',days:7}, d.settings||{});
+      state.session  = d.session || null;
+      state.users    = (Array.isArray(d.users)&&d.users.length) ? d.users : DEFAULT_USERS();
+      const inc = (d.categories&&Array.isArray(d.categories.income)&&d.categories.income.length) ? d.categories.income : DEFAULT_CATS('income');
+      const exp = (d.categories&&Array.isArray(d.categories.expense)&&d.categories.expense.length) ? d.categories.expense : DEFAULT_CATS('expense');
+      state.categories = { income:inc, expense:exp };
+      state.accounts = (d.accounts&&Array.isArray(d.accounts)&&d.accounts.length) ? d.accounts : DEFAULT_ACCOUNTS();
+      // 迁移旧账目：无账户归公共账户
+      const keys = new Set(allAccounts().map(a=>a.key));
+      state.records.forEach(r=>{ if(!keys.has(r.account)) r.account='public'; });
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+/* ---------- 提示 ---------- */
+function toast(msg,kind){
+  const el=document.createElement('div');
+  el.className='toast '+(kind||'');
+  el.textContent=msg;
+  $('#toastWrap').appendChild(el);
+  setTimeout(()=>{ el.style.transition='.3s'; el.style.opacity='0'; el.style.transform='translateX(24px)';
+                   setTimeout(()=>el.remove(),320); }, 2200);
+}
+
+/* ---------- 演示数据 ---------- */
+function demoData(){
+  const mk=(id,type,category,date,amount,meta,operator,extra)=>Object.assign(
+    {id,type,category,date,amount:Number(amount),meta:meta||{},operator:operator||'',remark:'',
+     voucher:'',purpose:'',createdAt:Date.now()-(1000-id), account:'public', linkedExpenseCat:null}, extra||{});
+  return [
+    mk(1,'income','上级拨款收入','2026-04-08',100000,{unit:'XX街道办事处',purpose:'党建经费专项账户',voucher:'财政拨款单 No.2026-031'},'李主任',{account:'party'}),
+    mk(2,'income','卫生费征收收入','2026-05-15',18000,{payer:'居民',houses:'180',note:'正常缴费'},'王会计',{account:'sanitation'}),
+    mk(3,'income','光伏收入','2026-06-30',3100,{period:'2026-05',cycle:'2026-05-01 至 2026-05-31',note:'含光伏补贴'},'张师傅',{account:'public'}),
+    mk(4,'expense','办公费支出','2026-05-20',980,{},{purpose:'办公耗材、打印纸采购',voucher:'FP20260520-03'},'王会计',{account:'party'}),
+    mk(5,'expense','水电费支出','2026-06-18',2210,{},{purpose:'党群服务中心 6 月水电费',voucher:'FP20260618-01'},'王会计',{account:'party'}),
+    mk(6,'income','上级拨款收入','2026-07-05',120000,{unit:'XX街道办事处',purpose:'环卫专项账户',voucher:'财政拨款单 No.2026-058'},'李主任',{account:'sanitation'}),
+    mk(7,'income','上级拨款收入','2026-09-10',50000,{unit:'区民政局',purpose:'社区困难群众帮扶资金',voucher:'拨款凭证 No.2026-112'},'李主任'),
+    mk(8,'income','卫生费征收收入','2026-07-18',18600,{payer:'居民',houses:'186',note:'正常缴费'},'王会计',{account:'sanitation'}),
+    mk(9,'income','卫生费征收收入','2026-08-20',12600,{payer:'商户',houses:'42',note:'正常缴费'},'王会计',{account:'sanitation'}),
+    mk(10,'income','小厅堂场地使用费收入','2026-08-02',1800,{renter:'XX文化传媒公司',usage:'会议培训',duration:'3 天'},'李主任',{account:'culture'}),
+    mk(11,'income','小厅堂场地使用费收入','2026-09-15',600,{renter:'居民张某',usage:'婚庆活动',duration:'1 天'},'李主任',{account:'culture'}),
+    mk(12,'income','光伏收入','2026-07-31',3200,{period:'2026-06',cycle:'2026-06-01 至 06-30',note:''},'张师傅',{account:'public'}),
+    mk(13,'income','光伏收入','2026-08-31',3480,{period:'2026-07',cycle:'2026-07-01 至 07-31',note:''},'张师傅',{account:'public'}),
+    mk(14,'expense','办公费支出','2026-07-12',1860,{},{purpose:'打印纸、文具、档案耗材采购',voucher:'FP20260712-02'},'王会计',{account:'party'}),
+    mk(15,'expense','办公费支出','2026-08-25',1240,{},{purpose:'宣传横幅、公示海报制作',voucher:'FP20260825-01'},'王会计',{account:'sanitation'}),
+    mk(16,'expense','水电费支出','2026-07-20',2380,{},{purpose:'党群服务中心 7 月水电费',voucher:'FP20260720-05'},'王会计',{account:'sanitation'}),
+    mk(17,'expense','水电费支出','2026-08-20',2560,{},{purpose:'党群服务中心 8 月水电费',voucher:'FP20260820-04'},'王会计',{account:'sanitation'}),
+    mk(18,'expense','零工维修费支出','2026-08-08',980,{},{purpose:'公共活动室灯具维修及人工费',voucher:'FP20260808-01'},'张师傅',{account:'sanitation'}),
+    mk(19,'expense','其他零星支出','2026-09-05',460,{},{purpose:'卫生消杀物资采购',voucher:'FP20260905-02'},'王会计',{account:'sanitation'})
+  ];
+}
+function demoAssets(){
+  const base = Date.now();
+  const mk=(id,name,category,spec,date,amount,source,loc,custodian,status,remark)=>({
+    id, name, category, spec:spec||'', date, amount:Number(amount),
+    source:source||'', location:loc||'', custodian:custodian||'', status:status||'在用',
+    remark:remark||'', createdAt: base-(1000-id)
+  });
+  return [
+    mk(1,'台式计算机（办公）','办公设备','联想 / i5 / 16G','2026-04-20',4800,'上级拨款收入','党群服务中心 2 楼','王会计','在用','二季度工作经费购置'),
+    mk(2,'打印复印一体机','办公设备','惠普 M132','2026-04-22',2600,'上级拨款收入','党群服务中心 1 楼','王会计','在用',''),
+    mk(3,'会议桌椅（1 套）','家具用具','12 人位','2026-05-10',3200,'上级拨款收入','小厅堂','李主任','在用',''),
+    mk(4,'音响设备','文体器材','便携音箱 + 麦克风','2026-07-08',1500,'上级拨款收入','活动室','张师傅','在用',''),
+    mk(5,'宣传公示栏','宣传设施','户外不锈钢','2026-07-15',2200,'上级拨款收入','社区大门旁','王会计','在用',''),
+    mk(6,'旧电风扇','家具用具','落地式','2024-06-01',180,'','库房','王会计','闲置','使用年限较长')
+  ];
+}
+
+/* =========================================================
+   渲染：类目选择器
+   ========================================================= */
+function renderCatPickers(){
+  $('#incomeCatPicker').innerHTML = getCats('income').map(c=>`
+    <button type="button" class="cat-opt ${c.name===ui.incomeCat?'on':''}" data-cat="${esc(c.name)}">
+      <span class="ic">${c.icon}</span>
+      <span class="nm">${esc(c.name)}</span>
+      <span class="ds">${esc(c.desc)}</span>
+    </button>`).join('');
+  $('#expenseCatPicker').innerHTML = getCats('expense').map(c=>`
+    <button type="button" class="cat-opt ${c.name===ui.expenseCat?'on':''}" data-cat="${esc(c.name)}">
+      <span class="ic">${c.icon}</span>
+      <span class="nm">${esc(c.name)}</span>
+      <span class="ds">${esc(c.desc)}</span>
+    </button>`).join('');
+
+  $$('#incomeCatPicker .cat-opt').forEach(b=>b.onclick=()=>{
+    ui.incomeCat=b.dataset.cat; renderCatPickers(); renderIncomeFields(); renderIncomeRecent();
+  });
+  $$('#expenseCatPicker .cat-opt').forEach(b=>b.onclick=()=>{
+    ui.expenseCat=b.dataset.cat; renderCatPickers(); renderExpenseMeta(); renderExpenseRecent(); autoMatchExpenseAccount();
+  });
+}
+
+/* ---------- 动态字段 ---------- */
+function fieldHTML(f){
+  const req = f.required?'<span class="req">*</span>':'';
+  let input='';
+  if(f.type==='select'){
+    input = `<select name="m_${f.key}" data-key="${f.key}" ${f.required?'required':''}>
+        <option value="">请选择</option>
+        ${(f.options||[]).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}
+      </select>`;
+  }else if(f.type==='month'){
+    input = `<input type="month" name="m_${f.key}" data-key="${f.key}" ${f.required?'required':''}>`;
+  }else if(f.type==='date'){
+    input = `<input type="date" name="m_${f.key}" data-key="${f.key}" ${f.required?'required':''}>`;
+  }else if(f.type==='number'){
+    input = `<input type="number" step="1" min="0" name="m_${f.key}" data-key="${f.key}" placeholder="${esc(f.ph||'')}" ${f.required?'required':''}>`;
+  }else{
+    input = `<input type="text" name="m_${f.key}" data-key="${f.key}" placeholder="${esc(f.ph||'')}" ${f.required?'required':''}>`;
+  }
+  return `<div class="field"><label>${esc(f.label)}${req}</label>${input}</div>`;
+}
+function renderIncomeFields(){
+  const cat = catByName('income',ui.incomeCat);
+  let meta = (cat.meta||[]);
+  if(cat.name==='上级拨款收入'){
+    meta = meta.map(f=>{
+      if(f.key==='purpose'){
+        return Object.assign({}, f, {
+          type:'select', required:true,
+          options: state.accounts.map(a=>a.name).concat(['公共账户（其他经费）']),
+          ph:'选择资金用途对应专项账户'
+        });
+      }
+      return f;
+    });
+  }
+  let html = meta.map(f=>fieldHTML(f)).join('');
+  // 非上级拨款收入：显示入账专项账户选择（专款专用）
+  if(cat.name!=='上级拨款收入'){
+    html += `
+      <div class="field">
+        <label>入账专项账户</label>
+        <select id="incAccount">${allAccounts().map(a=>{
+          const bal = accountBalance(a.key);
+          return `<option value="${esc(a.key)}">${esc(a.icon+' '+a.name)}　余额 ${moneyRaw(bal)}</option>`;
+        }).join('')}</select>
+        <div class="muted mt8" style="font-size:12.5px">选择该笔收入记入哪个专项账户，未指定则默认入公共账户</div>
+      </div>`;
+  }
+  $('#incomeFields').innerHTML = html;
+  bindQuickAmount('#incomeForm input[name=amount]');
+}
+function renderExpenseMeta(){
+  const cat = catByName('expense',ui.expenseCat);
+  $('#expenseMetaFields').innerHTML = (cat.meta||[]).map(f=>fieldHTML(f)).join('');
+}
+function bindQuickAmount(sel){
+  const box = $(sel).closest('.field');
+  box.querySelectorAll('.quick-amt button').forEach(b=>{
+    b.onclick=()=>{
+      const inp = $(sel);
+      if(b.dataset.clr){ inp.value=''; }
+      else { inp.value = (Number(inp.value||0) + Number(b.dataset.add||0)).toFixed(2); }
+      if(inp.id==='expAmount') onExpenseAccountChange();
+    };
+  });
+}
+
+/* =========================================================
+   渲染：首页总览
+   ========================================================= */
+function renderDashboard(){
+  const rg = rangeOf(ui.dashPeriod);
+  const rs = state.records.filter(r=>inRange(r,rg.from,rg.to));
+  const inc = rs.filter(r=>r.type==='income'), exp = rs.filter(r=>r.type==='expense');
+  const ti = sumOf(inc), te = sumOf(exp), bal = ti-te;
+
+  $('#dashRangeText').textContent = rg.label;
+  $('#dashIn').textContent = money(ti);
+  $('#dashEx').textContent = money(te);
+  const balEl = $('#dashBal');
+  balEl.textContent = money(bal);
+  balEl.classList.toggle('neg', bal<0);
+  $('#dashInCount').textContent = inc.length+' 笔';
+  $('#dashExCount').textContent = exp.length+' 笔';
+
+  $('#dashInFoot').textContent = getCats('income').map(c=>c.name.replace(/收入$/,'').replace(/支出$/,'')).join(' / ');
+  $('#dashExFoot').textContent = getCats('expense').map(c=>c.name.replace(/支出$/,'')).join(' / ');
+
+  $('#dashInTotalMini').textContent = '合计 '+money(ti);
+  $('#dashExTotalMini').textContent = '合计 '+money(te);
+
+  const bars = (list,catList,total,cls)=>{
+    const rows = catList.map(c=>{
+      const v = sumOf(list.filter(r=>r.category===c.name));
+      const pct = total>0 ? (v/total*100) : 0;
+      return `<div class="bar-row">
+        <span class="nm">${esc(c.name.replace(/收入$|支出$/,''))}</span>
+        <span class="bar-track"><span class="bar-fill ${cls}" style="width:${pct.toFixed(1)}%"></span></span>
+        <span class="vl ${cls==='in'?'t-in':'t-ex'}">${moneyRaw(v)}</span>
+        <span class="pc">${pct.toFixed(0)}%</span>
+      </div>`;
+    }).join('');
+    return rows || '<div class="empty" style="padding:22px">暂无数据</div>';
+  };
+  $('#dashInBars').innerHTML = bars(inc,getCats('income'),ti,'in');
+  $('#dashExBars').innerHTML = bars(exp,getCats('expense'),te,'ex');
+
+  $('#dashIncomeSummary').innerHTML  = categorySummaryBlock(inc, getCats('income'), ti, 'in', rg.label);
+  $('#dashExpenseSummary').innerHTML = categorySummaryBlock(exp, getCats('expense'), te, 'ex', rg.label);
+
+  const recent = state.records.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,10);
+  $('#dashRecent').innerHTML = recent.length? tableHTML(recent,true) :
+    '<div class="empty"><span class="ic">📭</span>还没有账目，先去「收入记账」或「支出记账」记一笔吧</div>';
+
+  bindRowActions('#dashRecent');
+  $$('#dashPeriod .chip').forEach(c=>c.classList.toggle('on',c.dataset.period===ui.dashPeriod));
+  renderAccountView(rs);
+}
+
+/* =========================================================
+   渲染：明细表（按角色控制操作）
+   ========================================================= */
+function briefOf(r){
+  if(r.type==='income'){
+    const cat = catByName('income', r.category);
+    const vals = (cat.meta||[]).map(f=> r.meta[f.key]).filter(v=> v!==undefined && v!==null && v!=='');
+    return vals.length ? vals.join(' · ') : '—';
+  }
+  return r.purpose || (r.remark||'').slice(0,24) || '—';
+}
+
+/* ---------- 支出关联收入类目（读类目总余额） ---------- */
+function incomeCatTotal(cat){
+  return sumOf(state.records.filter(r=>r.type==='income' && r.category===cat));
+}
+function linkedUsedAmount(cat, excludeId){
+  if(!cat) return 0;
+  return sumOf(state.records.filter(r=>r.type==='expense' && r.linkedIncomeCat===cat && r.id!==excludeId));
+}
+function remainingOf(cat, excludeId){
+  return incomeCatTotal(cat) - linkedUsedAmount(cat, excludeId);
+}
+function linkBadgeOf(r){
+  if(r.type!=='expense' || !r.linkedIncomeCat) return '';
+  return `<span class="muted" style="font-size:12px"> · 关联 ${esc(r.linkedIncomeCat)}</span>`;
+}
+function accountBadgeOf(r){
+  const a = getAccount(r.account);
+  return `<span class="muted" style="font-size:12px;color:${a.color}"> · ${a.icon} ${esc(a.name)}</span>`;
+}
+function linkedCatBadgeOf(r){
+  if(r.type!=='expense' || !r.linkedExpenseCat) return '';
+  return `<span class="muted" style="font-size:12px"> · 关联 ${esc(r.linkedExpenseCat)}</span>`;
+}
+function fillExpenseAccount(sel){
+  const box = $('#expAccount');
+  if(!box) return;
+  let cur = sel!=null ? sel : box.value;
+  const opts = allAccounts().map(a=>{
+    const bal = accountBalance(a.key);
+    const lbl = `${a.icon} ${a.name}　余额 ${moneyRaw(bal)}`;
+    return `<option value="${esc(a.key)}" ${a.key===cur?'selected':''}>${esc(lbl)}</option>`;
+  });
+  box.innerHTML = opts.join('');
+}
+function fillExpenseLinkedCat(sel){
+  const box = $('#expLinkedCat');
+  if(!box) return;
+  let cur = sel!=null ? sel : box.value;
+  const cats = getCats('expense');
+  const total = sumOf(state.records.filter(r=>r.type==='expense'));
+  const opts = cats.map(c=>{
+    const v = sumOf(state.records.filter(r=>r.type==='expense' && r.linkedExpenseCat===c.name));
+    const pct = total>0 ? (v/total*100).toFixed(0) : 0;
+    return `<option value="${esc(c.name)}" ${c.name===cur?'selected':''}>${esc(c.name)}　已关联 ${moneyRaw(v)}（${pct}%）</option>`;
+  });
+  box.innerHTML = '<option value="" disabled '+(!cur?'selected':'')+'>— 请选择支出科目 —</option>' + opts.join('');
+  onExpenseLinkedCatChange();
+}
+function onExpenseLinkedCatChange(){
+  const box = $('#expLinkedCat'); const info = $('#expLinkedCatInfo');
+  if(!box || !info) return;
+  const cat = box.value;
+  if(!cat){ info.innerHTML = ''; return; }
+  const v = sumOf(state.records.filter(r=>r.type==='expense' && r.linkedExpenseCat===cat));
+  const cnt = state.records.filter(r=>r.type==='expense' && r.linkedExpenseCat===cat).length;
+  info.innerHTML = `已关联「${esc(cat)}」${cnt} 笔，累计 ${money(v)}，用于归集统计`;
+}
+function onExpenseAccountChange(){
+  const box = $('#expAccount'); const info = $('#expAccountInfo');
+  if(!box || !info) return;
+  const key = box.value || 'public';
+  const a = getAccount(key);
+  const inc = accountIncome(key), exp = accountExpense(key), rem = inc-exp;
+  const curAmt = parseFloat($('#expAmount').value)||0;
+  let html = `列支账户「${esc(a.icon+' '+a.name)}」<br>累计收入 ${money(inc)}，累计支出 ${money(exp)}，账户余额 <b style="color:${rem<0?'#e02020':'#1f9d55'}">${money(rem)}</b>`;
+  if(curAmt>rem) html += `<div style="color:#e02020;margin-top:4px">⚠ 本笔 ${money(curAmt)} 将超过该专项账户余额 ${money(rem)}，违反专款专用原则</div>`;
+  else if(key!=='public' && curAmt>0) html += `<div style="color:#1f9d55;margin-top:4px">✓ 本笔从「${esc(a.name)}」列支，符合专款专用</div>`;
+  info.innerHTML = html;
+}
+/* 支出按用途自动匹配专项账户 */
+function matchAccountForExpense(catName, purposeText){
+  const text = ((catName||'')+' '+(purposeText||'')).toLowerCase();
+  let hit = null;
+  allAccounts().forEach(a=>{
+    if(a.key==='public') return;
+    (a.keywords||[]).forEach(k=>{ if(k && text.indexOf(String(k).toLowerCase())>=0) hit = a.key; });
+  });
+  return hit;
+}
+function autoMatchExpenseAccount(){
+  const box = $('#expAccount'); if(!box) return;
+  const cat = ui.expenseCat;
+  const purpose = ($('#expPurpose') ? $('#expPurpose').value : '');
+  const key = matchAccountForExpense(cat, purpose);
+  if(key && box.value!==key){
+    box.value = key;
+    onExpenseAccountChange();
+  }
+}
+
+function tableHTML(list){
+  return `<table>
+    <thead><tr>
+      <th style="width:104px">日期</th>
+      <th style="width:70px">类型</th>
+      <th style="width:150px">类目</th>
+      <th>摘要 / 用途</th>
+      <th style="width:104px">经办人</th>
+      <th style="width:128px;text-align:right">金额（元）</th>
+      <th style="width:110px;text-align:right">操作</th>
+    </tr></thead>
+    <tbody>${list.map(r=>`
+      <tr>
+        <td class="mono">${esc(r.date)}</td>
+        <td><span class="tag ${r.type==='income'?'in':'ex'}">${r.type==='income'?'收入':'支出'}</span></td>
+        <td>${esc(r.category)}</td>
+        <td>${esc(briefOf(r))}${r.voucher?`<span class="muted" style="font-size:12px"> · 票号 ${esc(r.voucher)}</span>`:''}${accountBadgeOf(r)}${linkedCatBadgeOf(r)}</td>
+        <td>${esc(r.operator||'—')}</td>
+        <td class="num-cell ${r.type==='income'?'t-in':'t-ex'}">${(r.type==='income'?'+':'−')}${moneyRaw(r.amount)}</td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="link-btn" data-act="edit" data-id="${r.id}">查看${isAdmin()?'/改':''}</button>
+          ${isAdmin()?`<button class="link-btn del" data-act="del" data-id="${r.id}">删除</button>`:''}
+        </td>
+      </tr>`).join('')}</tbody>
+  </table>`;
+}
+function bindRowActions(scope){
+  $$(scope+' [data-act]').forEach(b=>{
+    b.onclick=()=>{
+      const id = b.dataset.id;
+      if(b.dataset.act==='edit') openEdit(id);
+      else delRecord(id);
+    };
+  });
+}
+
+/* ---------- 收入 / 支出：最近记录 ---------- */
+function renderIncomeRecent(){
+  const cat = catByName('income',ui.incomeCat);
+  $('#incomeRecentTitle').textContent = cat.name;
+  const list = state.records.filter(r=>r.type==='income'&&r.category===cat.name)
+                           .sort((a,b)=>b.createdAt-a.createdAt);
+  $('#incomeRecent').innerHTML = list.length? tableHTML(list) :
+    `<div class="empty"><span class="ic">📭</span>「${esc(cat.name)}」暂无记录</div>`;
+  bindRowActions('#incomeRecent');
+}
+function renderExpenseRecent(){
+  const cat = catByName('expense',ui.expenseCat);
+  $('#expenseRecentTitle').textContent = cat.name;
+  const list = state.records.filter(r=>r.type==='expense'&&r.category===cat.name)
+                           .sort((a,b)=>b.createdAt-a.createdAt);
+  $('#expenseRecent').innerHTML = list.length? tableHTML(list) :
+    `<div class="empty"><span class="ic">📭</span>「${esc(cat.name)}」暂无记录</div>`;
+  bindRowActions('#expenseRecent');
+}
+
+/* =========================================================
+   渲染：明细查询
+   ========================================================= */
+function filteredRecords(){
+  const kw = ($('#fKeyword').value||'').trim().toLowerCase();
+  const ty = $('#fType').value;
+  const ct = $('#fCategory').value;
+  const f  = $('#fFrom').value, t = $('#fTo').value;
+  return state.records.filter(r=>{
+    if(ty && r.type!==ty) return false;
+    if(ct && r.category!==ct) return false;
+    if(!inRange(r,f,t)) return false;
+    if(kw){
+      const hay = [
+        r.date, r.category, r.operator, r.amount, r.purpose, r.voucher, r.remark,
+        Object.values(r.meta||{}).join(' '),
+        briefOf(r)
+      ].join(' ').toLowerCase();
+      if(!hay.includes(kw)) return false;
+    }
+    return true;
+  }).sort((a,b)=> a.date===b.date ? b.createdAt-a.createdAt : (a.date<b.date?1:-1));
+}
+function renderDetail(){
+  const list = filteredRecords();
+  const inc = sumOf(list.filter(r=>r.type==='income'));
+  const exp = sumOf(list.filter(r=>r.type==='expense'));
+  $('#dCount').textContent = list.length;
+  $('#dSumIn').textContent = money(inc);
+  $('#dSumEx').textContent = money(exp);
+  $('#detailTable').innerHTML = list.length? tableHTML(list) :
+    '<div class="empty"><span class="ic">🔍</span>没有符合条件的账目，试着放宽筛选条件</div>';
+  bindRowActions('#detailTable');
+}
+
+/* =========================================================
+   渲染：年份选择
+   ========================================================= */
+function fillYearSelects(){
+  const years = new Set(state.records.map(r=>r.date.slice(0,4)));
+  years.add(String(new Date().getFullYear()));
+  const arr = Array.from(years).sort().reverse();
+  const opts = arr.map(y=>`<option value="${y}">${y} 年</option>`).join('');
+  const cy = $('#rpYear').value;
+  $('#rpYear').innerHTML = opts;
+  if(cy && arr.includes(cy)) $('#rpYear').value = cy;
+}
+function categorySummaryBlock(list, cats, total, cls, label){
+  const rows = cats.map(c=>{
+    const sub = list.filter(r=>r.category===c.name);
+    const v = sumOf(sub), pct = total>0?(v/total*100):0;
+    return `<div class="bar-row">
+      <span class="nm">${esc(c.name)}</span>
+      <span class="bar-track"><span class="bar-fill ${cls}" style="width:${pct.toFixed(1)}%"></span></span>
+      <span class="vl ${cls==='in'?'t-in':'t-ex'}">${moneyRaw(v)}</span>
+      <span class="pc">${pct.toFixed(0)}%</span>
+    </div>
+    <div class="muted" style="font-size:12px;padding-left:2px;margin-top:-4px">共 ${sub.length} 笔</div>`;
+  }).join('');
+  return `<div class="flex" style="justify-content:space-between;padding-bottom:8px">
+      <span class="muted" style="font-size:12.5px">统计区间：${label}</span>
+      <span class="muted" style="font-size:12.5px">${list.length} 笔</span>
+    </div>
+    ${rows}
+    <div class="sum-total"><span>合计</span><span class="${cls==='in'?'t-in':'t-ex'}">${money(total)}</span></div>`;
+}
+
+/* =========================================================
+   季度公示报表
+   ========================================================= */
+function rmbUpper(n){
+  n = Number(n||0);
+  if(!isFinite(n)) return '';
+  const neg = n<0; n = Math.abs(n);
+  const digits='零壹贰叁肆伍陆柒捌玖';
+  const units=['','拾','佰','仟'];
+  const bigUnits=['','万','亿','万亿'];
+  let intPart = Math.floor(n+1e-9);
+  let decPart = Math.round((n-intPart)*100);
+  let intStr='';
+  if(intPart===0) intStr='零';
+  else{
+    let groups=[]; let t=intPart;
+    while(t>0){ groups.push(t%10000); t=Math.floor(t/10000); }
+    for(let g=groups.length-1;g>=0;g--){
+      const v=groups[g];
+      if(v===0){ if(g!==0 && intStr && !/零$/.test(intStr)) intStr+='零'; continue; }
+      let s='', zero=false, gi=0, tt=v;
+      while(tt>0){
+        const d=tt%10;
+        if(d===0){ zero=true; }
+        else{ s = digits[d]+units[gi]+(zero?'零':'')+s; zero=false; }
+        tt=Math.floor(tt/10); gi++;
+      }
+      if(g < groups.length-1 && v < 1000 && !/零$/.test(intStr)) s = '零'+s;
+      intStr += s + bigUnits[g];
+    }
+    intStr = intStr.replace(/零+/g,'零').replace(/零$/,'');
+  }
+  let res = intStr + '元';
+  if(decPart===0) res += '整';
+  else{
+    const jiao=Math.floor(decPart/10), fen=decPart%10;
+    if(jiao) res += digits[jiao]+'角';
+    if(fen) res += digits[fen]+'分';
+    else if(jiao) res += '整';
+  }
+  return (neg?'负':'')+res;
+}
+
+function buildReport(){
+  const y = Number($('#rpYear').value);
+  const q = Number($('#rpQuarter').value);
+  const withAppendix = $('#rpAppendix').value==='1';
+  const rg = quarterRange(y,q);
+  const rs = state.records.filter(r=>inRange(r,rg.from,rg.to));
+
+  const incList = rs.filter(r=>r.type==='income');
+  const expList = rs.filter(r=>r.type==='expense');
+  const incVals = getCats('income').map(c=>sumOf(incList.filter(r=>r.category===c.name)));
+  const expVals = getCats('expense').map(c=>sumOf(expList.filter(r=>r.category===c.name)));
+  const ti = incVals.reduce((a,b)=>a+b,0), te = expVals.reduce((a,b)=>a+b,0);
+  const bal = ti-te;
+
+  const st = state.settings;
+  const now = new Date();
+  const dateLine = `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日`;
+
+  const incLines = getCats('income').map((c,i)=>
+    `<div class="li">${esc(c.name)}：<span class="money">${num2(incVals[i])}</span> 元（${esc(reportDescOf(c))}）</div>`).join('');
+  const expLines = getCats('expense').map((c,i)=>
+    `<div class="li">${esc(c.name)}：<span class="money">${num2(expVals[i])}</span> 元（${esc(reportDescOf(c))}）</div>`).join('');
+
+  const accLines = allAccounts().map(a=>{
+    const bal = accountBalance(a.key);
+    return `<div class="li">${esc(a.icon+' '+a.name)}：结余 <span class="money">${num2(bal)}</span> 元</div>`;
+  }).join('');
+
+  let appendix = '';
+  if(withAppendix){
+    const rows = rs.slice().sort((a,b)=> a.date<b.date?-1:1).map((r,i)=>`
+      <tr>
+        <td style="text-align:center">${i+1}</td>
+        <td style="text-align:center">${esc(r.date)}</td>
+        <td style="text-align:center">${r.type==='income'?'收入':'支出'}</td>
+        <td>${esc(r.category)}</td>
+        <td>${esc(briefOf(r))}</td>
+        <td style="text-align:right">${r.type==='income'?num2(r.amount):''}</td>
+        <td style="text-align:right">${r.type==='expense'?num2(r.amount):''}</td>
+      </tr>`).join('');
+    appendix = `
+      <hr class="divider">
+      <div class="appendix-title">附：${y} 年第 ${q} 季度收支明细表</div>
+      <table>
+        <thead><tr>
+          <th style="width:42px;text-align:center">序号</th>
+          <th style="width:96px;text-align:center">日期</th>
+          <th style="width:56px;text-align:center">类型</th>
+          <th style="width:150px">类目</th>
+          <th>摘要 / 用途</th>
+          <th style="width:96px;text-align:center">收入(元)</th>
+          <th style="width:96px;text-align:center">支出(元)</th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#999">本季度暂无账目</td></tr>'}</tbody>
+        <tfoot><tr>
+          <td colspan="5" style="font-weight:700;text-align:right">本季度合计</td>
+          <td style="font-weight:700;text-align:right">${num2(ti)}</td>
+          <td style="font-weight:700;text-align:right">${num2(te)}</td>
+        </tr></tfoot>
+      </table>
+      <div class="li" style="margin-top:10px;font-size:13.5px">本季度结余：<span class="money">${num2(bal)}</span> 元（大写：${rmbUpper(bal)}）</div>`;
+  }
+
+  const html = `
+    <h1>${esc(st.name)} ${y} 年第 ${q} 季度财务收支公示</h1>
+    <div class="pre">为规范社区财务公开工作，保障居民知情权、监督权，现将我社区本季度财务收支情况公示如下：</div>
+
+    <h3>一、本季度总收入（合计：${num2(ti)} 元）</h3>
+    ${incLines}
+
+    <h3>二、本季度总支出（合计：${num2(te)} 元）</h3>
+    ${expLines}
+
+    <h3>三、本季度财务结余</h3>
+    <div class="li">本季度总收入 <span class="money">${num2(ti)}</span> 元，总支出 <span class="money">${num2(te)}</span> 元，季度结余 <span class="money">${num2(bal)}</span> 元。</div>
+    <div class="li note">（金额大写：${rmbUpper(bal)}）</div>
+
+    <h3>四、账目说明</h3>
+    <div class="li note">1. 本季度所有收支账目明细完整、票据齐全，可到社区办公室查阅原始凭证；</div>
+    <div class="li note">2. 所有资金均用于社区公共服务、日常运营、设施维护等便民工作，专项资金专款专用；</div>
+    <div class="li note">3. 公示期为 ${esc(st.days||7)} 天，居民如有疑问，可向社区工作人员咨询核实。</div>
+
+    <h3>五、专项账户结余</h3>
+    ${accLines}
+
+    <div class="sign">${esc(st.signer)}<br>${dateLine}</div>
+    ${appendix}
+  `;
+  return {html, ti, te, bal, y, q};
+}
+
+function renderReport(){
+  const {html} = buildReport();
+  $('#reportPaper').innerHTML = html;
+}
+
+function reportPlainText(){
+  const {y,q,ti,te,bal} = buildReport();
+  const rg = quarterRange(y,q);
+  const rs = state.records.filter(r=>inRange(r,rg.from,rg.to));
+  const incList = rs.filter(r=>r.type==='income'), expList = rs.filter(r=>r.type==='expense');
+  const st = state.settings;
+  const now = new Date();
+  const L = [];
+  L.push(`${st.name} ${y} 年第 ${q} 季度财务收支公示`);
+  L.push('');
+  L.push('为规范社区财务公开工作，保障居民知情权、监督权，现将我社区本季度财务收支情况公示如下：');
+  L.push('');
+  L.push(`一、本季度总收入（合计：${num2(ti)} 元）`);
+  getCats('income').forEach(c=>{
+    const v = sumOf(incList.filter(r=>r.category===c.name));
+    L.push(`${c.name}：${num2(v)} 元（${reportDescOf(c)}）`);
+  });
+  L.push('');
+  L.push(`二、本季度总支出（合计：${num2(te)} 元）`);
+  getCats('expense').forEach(c=>{
+    const v = sumOf(expList.filter(r=>r.category===c.name));
+    L.push(`${c.name}：${num2(v)} 元（${reportDescOf(c)}）`);
+  });
+  L.push('');
+  L.push('三、本季度财务结余');
+  L.push(`本季度总收入 ${num2(ti)} 元，总支出 ${num2(te)} 元，季度结余 ${num2(bal)} 元。`);
+  L.push(`（金额大写：${rmbUpper(bal)}）`);
+  L.push('');
+  L.push('四、账目说明');
+  L.push('1. 本季度所有收支账目明细完整、票据齐全，可到社区办公室查阅原始凭证；');
+  L.push('2. 所有资金均用于社区公共服务、日常运营、设施维护等便民工作，专项资金专款专用；');
+  L.push(`3. 公示期为 ${st.days||7} 天，居民如有疑问，可向社区工作人员咨询核实。`);
+  L.push('');
+  L.push('五、专项账户结余');
+  allAccounts().forEach(a=>{ L.push(`${a.icon} ${a.name}：结余 ${num2(accountBalance(a.key))} 元`); });
+  L.push('');
+  L.push(st.signer);
+  L.push(`${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日`);
+  return L.join('\n');
+}
+
+/* =========================================================
+   专项账户：可视化与统计
+   ========================================================= */
+function renderAccountCards(containerId, recs, columns){
+  const el = $(containerId); if(!el) return;
+  if(columns) el.style.gridTemplateColumns = `repeat(${columns},1fr)`;
+  else el.style.gridTemplateColumns = '';
+  const accs = allAccounts();
+  el.innerHTML = accs.map(a=>{
+    const inc = sumOf(recs.filter(r=>r.type==='income'&&r.account===a.key));
+    const exp = sumOf(recs.filter(r=>r.type==='expense'&&r.account===a.key));
+    const bal = inc-exp;
+    return `<div class="acc-card">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:${a.color}"></div>
+      <div class="top"><span class="ic">${a.icon}</span><span class="nm">${esc(a.name)}</span></div>
+      <div class="ds">${esc(a.desc||'')}</div>
+      <div class="bal" style="color:${bal<0?'#e02020':'#111'}">${money(bal)}</div>
+      <div class="sub"><span>收入 <b style="color:var(--income)">${moneyRaw(inc)}</b></span><span>支出 <b style="color:var(--expense)">${moneyRaw(exp)}</b></span><span>余额 <b style="color:${bal<0?'#e02020':'var(--primary)'}">${moneyRaw(bal)}</b></span></div>
+    </div>`;
+  }).join('') || '<div class="empty">暂无账户</div>';
+}
+function renderAccountView(recs){
+  recs = recs || state.records;
+  renderAccountCards('#dashAccounts', recs);
+  renderAccountBars('#dashAccountBars', recs);
+  const sel = $('#dashAccFlowSel');
+  if(sel){
+    const cur = sel.value || 'public';
+    sel.innerHTML = allAccounts().map(a=>`<option value="${esc(a.key)}" ${a.key===cur?'selected':''}>${esc(a.icon+' '+a.name)}</option>`).join('');
+    sel.onchange = ()=>renderAccountFlow(recs);
+  }
+  renderAccountFlow(recs);
+}
+function renderAccountBars(containerId, recs){
+  const el = $(containerId); if(!el) return;
+  const accs = allAccounts();
+  const incOf = k=>sumOf(recs.filter(r=>r.type==='income'&&r.account===k));
+  const expOf = k=>sumOf(recs.filter(r=>r.type==='expense'&&r.account===k));
+  const maxV = Math.max(1, ...accs.map(a=>Math.max(incOf(a.key), expOf(a.key))));
+  el.innerHTML = accs.map(a=>{
+    const inc=incOf(a.key), exp=expOf(a.key), bal=inc-exp;
+    const pInc=(inc/maxV*100), pExp=(exp/maxV*100);
+    return `<div class="acc-row">
+      <span class="nm"><span style="color:${a.color}">${a.icon}</span> ${esc(a.name)}</span>
+      <span class="bar-track"><span class="bar-fill in" style="width:${pInc.toFixed(1)}%"></span></span>
+      <span class="vl t-in">${moneyRaw(inc)}</span>
+      <span class="bar-track"><span class="bar-fill ex" style="width:${pExp.toFixed(1)}%"></span></span>
+      <span class="vl t-ex">${moneyRaw(exp)}</span>
+      <span class="bal" style="color:${bal<0?'#e02020':'#1d4ed8'}">${moneyRaw(bal)}</span>
+    </div>`;
+  }).join('') || '<div class="empty">暂无数据</div>';
+}
+function renderAccountFlow(recs){
+  recs = recs || state.records;
+  const sel = $('#dashAccFlowSel');
+  const key = sel ? sel.value : 'public';
+  const list = recs.filter(r=>r.account===key)
+    .sort((a,b)=> a.date===b.date? b.createdAt-a.createdAt : (a.date<b.date?1:-1));
+  $('#dashAccountFlow').innerHTML = list.length? tableHTML(list) : '<div class="empty"><span class="ic">📭</span>该账户暂无流水</div>';
+  bindRowActions('#dashAccountFlow');
+}
+function renderAccAdmin(){
+  const el = $('#accList'); if(!el) return;
+  const accs = state.accounts;
+  if(!accs.length){ el.innerHTML='<div class="muted" style="font-size:13px">暂无专项账户，点击右上角新增</div>'; return; }
+  el.innerHTML = accs.map(a=>`
+    <div class="cat-card">
+      <div class="top">
+        <span class="ic" style="color:${a.color}">${a.icon}</span>
+        <span class="nm">${esc(a.name)}</span>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-sm" data-editacc="${esc(a.key)}">编辑</button>
+          <button class="btn btn-sm btn-danger" data-delacc="${esc(a.key)}">删除</button>
+        </div>
+      </div>
+      <div class="ds">${esc(a.desc||'')}　·　账户余额 ${money(accountBalance(a.key))}</div>
+    </div>`).join('') + `<div class="badge-note mt8">公共账户 🏦 为系统内置账户，收纳非专项拨款及公共收入，不可删除。</div>`;
+  $$('#accList [data-editacc]').forEach(b=>b.onclick=()=>openAccModal(b.dataset.editacc));
+  $$('#accList [data-delacc]').forEach(b=>b.onclick=()=>delAcc(b.dataset.delacc));
+}
+function openAccModal(key, afterCreate){
+  const acc = key? state.accounts.find(a=>a.key===key):null;
+  $('#modalTitle').textContent = (key?'编辑':'新增')+'专项账户';
+  $('#modalSave').style.display='';
+  $('#modalBody').innerHTML = `
+    <div class="field"><label>账户名称<span class="req">*</span></label><input type="text" id="accName" value="${esc(acc?acc.name:'')}" placeholder="如：环卫专项账户"></div>
+    <div class="grid g3 mt14">
+      <div class="field"><label>图标(emoji)</label><input type="text" id="accIcon" value="${esc(acc?acc.icon:'🎯')}" maxlength="4"></div>
+      <div class="field"><label>主题色</label><input type="color" id="accColor" value="${esc(acc?acc.color:'#0f8a52')}" style="padding:2px;height:38px"></div>
+      <div class="field"><label>标识(key)</label><input type="text" id="accKey" value="${esc(acc?acc.key:'')}" placeholder="字母" ${acc?'disabled':''}></div>
+    </div>
+    <div class="field mt14"><label>账户说明</label><textarea id="accDesc" placeholder="该专项资金的用途说明">${esc(acc?acc.desc:'')}</textarea></div>
+    <div class="field mt14"><label>自动匹配关键词</label><input type="text" id="accKeywords" value="${esc((acc&&acc.keywords||[]).join('，'))}" placeholder="逗号分隔，如：党建，组织，党员"></div>
+    <div class="badge-note mt14">账户名称即为「上级拨款收入 · 资金用途」的可选项；记账时选择该用途，资金即记入此专项账户（专款专用）。支出记账填写「用途说明 / 类目」时，若包含上述关键词将自动匹配到本专项账户。</div>`;
+  $('#modalMask').classList.add('on');
+  $('#modalSave').onclick=()=>{
+    const name=$('#accName').value.trim();
+    const kk = acc? acc.key : ($('#accKey').value.trim()||('acc'+Date.now()));
+    if(!name) return toast('请填写账户名称','err');
+    if(!/^[A-Za-z0-9_]+$/.test(kk)) return toast('标识只能含字母数字下划线','err');
+    if(!acc && state.accounts.some(a=>a.key===kk)) return toast('标识已存在','err');
+    const kw = ($('#accKeywords').value||'').split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean);
+    const obj={key:kk,name,icon:$('#accIcon').value.trim()||'🎯',color:$('#accColor').value.trim()||'#0f8a52',desc:$('#accDesc').value.trim(),keywords:kw};
+    if(acc){ const i=state.accounts.findIndex(a=>a.key===kk); if(i>=0) state.accounts[i]=obj; }
+    else state.accounts.push(obj);
+    if(afterCreate) afterCreate(kk);
+    save(); closeModal(); renderAccAdmin(); renderAll(); fillExpenseAccount(); renderIncomeFields();
+    toast('专项账户已保存','ok');
+  };
+}
+function delAcc(key){
+  if(key==='public') return toast('公共账户不可删除','err');
+  if(!confirm('确认删除该专项账户？该账户下已有的收支将自动并入「公共账户」。')) return;
+  state.records.forEach(r=>{ if(r.account===key) r.account='public'; });
+  state.accounts = state.accounts.filter(a=>a.key!==key);
+  save(); renderAccAdmin(); renderAll(); fillExpenseAccount(); renderIncomeFields();
+  toast('已删除专项账户','ok');
+}
+
+/* =========================================================
+   增删改
+   ========================================================= */
+function addRecord(rec){
+  rec.id = Date.now() + Math.floor(Math.random()*1000);
+  rec.createdAt = Date.now();
+  state.records.push(rec);
+  save();
+}
+
+function delRecord(id){
+  if(!can('delete')) return toast('无权限：仅管理员可删除账目','err');
+  const r = state.records.find(x=>x.id==id);
+  if(!r) return;
+  if(!confirm(`确认删除这笔账目吗？\n\n${r.date}　${r.category}　${money(r.amount)}\n\n删除后不可恢复。`)) return;
+  state.records = state.records.filter(x=>x.id!=id);
+  save(); renderAll();
+  toast('已删除该笔账目','ok');
+}
+
+/* ---------- 编辑弹窗（业务员只读） ---------- */
+function openEdit(id){
+  const r = state.records.find(x=>x.id==id);
+  if(!r) return;
+  ui.editingId = r.id; ui.editType = r.type; ui.editCat = r.category;
+  const readOnly = !can('edit');
+
+  const buildBody = ()=>{
+    const isInc = ui.editType==='income';
+    const cats = isInc?getCats('income'):getCats('expense');
+    const catOpts = cats.map(c=>`<option value="${esc(c.name)}" ${c.name===ui.editCat?'selected':''}>${esc(c.name)}</option>`).join('');
+    const cat = catByName(ui.editType,ui.editCat);
+    const metaFields = cat.meta.map(f=>{
+        const v = (r.meta||{})[f.key]||'';
+        let inp;
+        if(f.type==='select') inp=`<select data-mkey="${f.key}" ${readOnly?'disabled':''}><option value="">请选择</option>${(f.options||[]).map(o=>`<option value="${esc(o)}" ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+        else if(f.type==='month') inp=`<input type="month" data-mkey="${f.key}" value="${esc(v)}" ${readOnly?'disabled':''}>`;
+        else if(f.type==='date') inp=`<input type="date" data-mkey="${f.key}" value="${esc(v)}" ${readOnly?'disabled':''}>`;
+        else if(f.type==='number') inp=`<input type="number" step="1" min="0" data-mkey="${f.key}" value="${esc(v)}" ${readOnly?'disabled':''}>`;
+        else inp=`<input type="text" data-mkey="${f.key}" value="${esc(v)}" ${readOnly?'disabled':''}>`;
+        return `<div class="field"><label>${esc(f.label)}</label>${inp}</div>`;
+      }).join('');
+
+    const accOpts = allAccounts().map(a=>{
+      const bal = accountBalance(a.key);
+      return `<option value="${esc(a.key)}" ${r.account===a.key?'selected':''}>${esc(a.icon+' '+a.name)}　余额 ${moneyRaw(bal)}</option>`;
+    }).join('');
+    const accField = `
+      <div class="field"><label>入账 / 列支账户<span class="req">*</span></label>
+        <select id="mAccount" ${readOnly?'disabled':''}>${accOpts}</select>
+        <div class="muted mt8" style="font-size:12px">收入记入 / 支出列支该账户（专款专用）</div></div>`;
+    const linkedCatOpts = getCats('expense').map(c=>`<option value="${esc(c.name)}" ${r.linkedExpenseCat===c.name?'selected':''}>${esc(c.name)}</option>`).join('');
+    const linkedCatField = `
+      <div class="field"><label>关联支出科目<span class="req">*</span></label>
+        <select id="mLinkedCat" ${readOnly?'disabled':''} required>
+          <option value="" disabled ${r.linkedExpenseCat?'':'selected'}>— 请选择支出科目 —</option>
+          ${linkedCatOpts}
+        </select>
+        <div class="muted mt8" style="font-size:12px">用于将本笔支出归集到指定支出科目进行统计</div></div>`;
+    const common = isInc ? accField : (accField + `
+      <div class="field"><label>用途说明<span class="req">*</span></label>
+        <input type="text" id="mPurpose" value="${esc(r.purpose||'')}" ${readOnly?'disabled':''}></div>
+      <div class="field"><label>票据编号</label>
+        <input type="text" id="mVoucher" value="${esc(r.voucher||'')}" ${readOnly?'disabled':''}></div>
+      ${linkedCatField}`);
+
+    return `
+      <div class="field"><label>收支类型</label>
+        <select id="mType" ${readOnly?'disabled':''}>
+          <option value="income"  ${isInc?'selected':''}>收入</option>
+          <option value="expense" ${!isInc?'selected':''}>支出</option>
+        </select>
+      </div>
+      <div class="field mt14"><label>类目</label>
+        <select id="mCat" ${readOnly?'disabled':''}>${catOpts}</select>
+      </div>
+      <div class="grid g2 mt14">
+        <div class="field"><label>日期<span class="req">*</span></label>
+          <input type="date" id="mDate" value="${esc(r.date)}" ${readOnly?'disabled':''}></div>
+        <div class="field"><label>金额（元）<span class="req">*</span></label>
+          <input type="number" step="0.01" min="0" id="mAmount" value="${Number(r.amount).toFixed(2)}" ${readOnly?'disabled':''}></div>
+      </div>
+      ${metaFields?`<div class="hr"></div><div class="grid g2">${metaFields}</div>`:''}
+      ${common?`<div class="grid g2 mt14">${common}</div>`:''}
+      <div class="grid g2 mt14">
+        <div class="field"><label>经办人<span class="req">*</span></label>
+          <input type="text" id="mOperator" value="${esc(r.operator||'')}" ${readOnly?'disabled':''}></div>
+        <div class="field"><label>备注</label>
+          <input type="text" id="mRemark" value="${esc(r.remark||'')}" ${readOnly?'disabled':''}></div>
+      </div>
+      ${readOnly?'<div class="badge-note mt14">当前为只读模式：业务员账号仅可查看账目，修改 / 删除需管理员操作。</div>'
+                :'<div class="badge-note mt14">提示：切换类型或类目后，正在填写的类目专属字段会按新类目重新生成。</div>'}`;
+  };
+
+  $('#modalTitle').textContent = (readOnly?'查看账目（只读）':'查看 / 修改账目')+'（'+r.date+'）';
+  $('#modalBody').innerHTML = buildBody();
+  $('#modalMask').classList.add('on');
+  $('#modalSave').style.display = readOnly ? 'none' : '';
+  $('#modalSave').textContent = '保存修改';
+  $('#modalSave').onclick = saveEdit;
+
+  if(readOnly) return;
+
+  $('#mType').onchange = e=>{
+    ui.editType = e.target.value;
+    ui.editCat = getCats(ui.editType)[0].name;
+    r.meta = {};
+    $('#modalBody').innerHTML = buildBody(); rewire();
+  };
+  $('#mCat').onchange = e=>{
+    ui.editCat = e.target.value;
+    r.meta = {};
+    $('#modalBody').innerHTML = buildBody(); rewire();
+  };
+  function rewire(){
+    $('#mType').onchange = e=>{
+      ui.editType = e.target.value;
+      ui.editCat = getCats(ui.editType)[0].name;
+      r.meta = {};
+      $('#modalBody').innerHTML = buildBody(); rewire();
+    };
+    $('#mCat').onchange = e=>{
+      ui.editCat = e.target.value;
+      r.meta = {};
+      $('#modalBody').innerHTML = buildBody(); rewire();
+    };
+  }
+}
+
+function saveEdit(){
+  const r = state.records.find(x=>x.id===ui.editingId);
+  if(!r){ closeModal(); return; }
+  const type = $('#mType').value;
+  const cat  = $('#mCat').value;
+  const date = $('#mDate').value;
+  const amount = parseFloat($('#mAmount').value);
+  const operator = $('#mOperator').value.trim();
+  if(!date) return toast('请填写日期','err');
+  if(!(amount>=0) || isNaN(amount)) return toast('请填写正确的金额','err');
+  if(!operator) return toast('请填写经办人','err');
+
+  const meta = {};
+  $$('#modalBody [data-mkey]').forEach(el=>{ meta[el.dataset.mkey] = el.value; });
+
+  r.type = type; r.category = cat; r.date = date; r.amount = amount;
+  r.operator = operator; r.remark = ($('#mRemark')||{}).value || '';
+  r.meta = meta;
+  if($('#mPurpose')) r.purpose = $('#mPurpose').value.trim();
+  if($('#mVoucher')) r.voucher = $('#mVoucher').value.trim();
+  if($('#mAccount')) r.account = $('#mAccount').value.trim() || 'public';
+  if($('#mLinkedCat')){
+    const lc = $('#mLinkedCat').value.trim();
+    if(!lc) return toast('请选择关联支出科目','err');
+    r.linkedExpenseCat = lc;
+  }
+
+  save(); closeModal(); renderAll();
+  toast('已保存修改','ok');
+}
+function closeModal(){ $('#modalMask').classList.remove('on'); ui.editingId=null; $('#modalSave').style.display=''; $('#modalSave').textContent='保存修改'; $('#modalSave').onclick=saveEdit; }
+
+/* =========================================================
+   数据导入（CSV 批量导入）
+   ========================================================= */
+function parseCSVText(text){
+  if(text.charCodeAt(0)===0xFEFF) text = text.slice(1);
+  const rows=[]; let row=[], field='', inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else inQ=false; }
+      else field+=c;
+    }else{
+      if(c==='"') inQ=true;
+      else if(c===','){ row.push(field); field=''; }
+      else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else if(c!=='\r') field+=c;
+    }
+  }
+  if(field!=='' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r=> r.some(c=>String(c).trim()!==''));
+}
+function csvCell(s){
+  s = s==null?'':String(s);
+  return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+const IMPORT_HEADS = {
+  record: ['日期','收支类型','类目','摘要/用途','金额','经办人','票据编号','备注'],
+  asset:  ['资产名称','类目','规格型号','购置日期','金额','资金来源','存放地点','保管人','状态','备注']
+};
+function buildImportTemplate(isRec){
+  const head = isRec?IMPORT_HEADS.record:IMPORT_HEADS.asset;
+  const sample = isRec
+    ? ['2026-01-15','支出','办公费支出','购买打印纸、文具','320.00','王会计','FP20260115-01','']
+    : ['台式计算机','办公设备','联想 i5/16G','2026-03-10','4800.00','上级拨款收入','党群服务中心2楼','王会计','在用',''];
+  return [head, sample].map(r=>r.map(csvCell).join(',')).join('\r\n');
+}
+function openImportModal(kind, defaultType){
+  if(!can('add')) return toast('无权限：仅可查看','err');
+  const isRec = kind==='record';
+  const head = isRec?IMPORT_HEADS.record:IMPORT_HEADS.asset;
+  ui.importKind=kind; ui.importDefaultType=defaultType||null; ui.importValid=[]; ui.importErrors=[];
+  const title = isRec
+    ? (defaultType==='income'?'批量导入收入':defaultType==='expense'?'批量导入支出':'批量导入收支明细')
+    : '批量导入固定资产';
+  $('#modalTitle').textContent = title;
+  $('#modalSave').style.display='';
+  $('#modalSave').textContent='确认导入';
+  $('#modalBody').innerHTML = `
+    <div class="muted" style="font-size:13px;line-height:1.9">
+      导入采用<b>追加</b>模式（不删除现有数据）。请按以下表头填写 CSV（UTF-8 编码、逗号分隔，可点「下载导入模板」生成）：<br>
+      <code style="color:var(--fg)">${head.map(esc).join('　|　')}</code><br>
+      ${isRec && defaultType ? '「收支类型」列可留空，空时默认按「'+(defaultType==='income'?'收入':'支出')+'」导入；' : ''}
+      日期格式 <code>YYYY-MM-DD</code>，金额填数字。<b>类目必须已在系统中配置</b>（资产类目为固定枚举），否则该行将被跳过。
+    </div>
+    <div class="flex mt14">
+      <button class="btn btn-sm" id="impTpl">⬇ 下载导入模板</button>
+      <label class="btn btn-sm btn-primary" style="cursor:pointer">⬆ 选择 CSV 文件
+        <input type="file" id="impFile" accept=".csv,text/csv" style="display:none">
+      </label>
+    </div>
+    <div class="hr"></div>
+    <div id="impPreview" class="muted" style="font-size:13px">尚未选择文件</div>`;
+  $('#impTpl').onclick = ()=> download((isRec?'收支明细导入模板':'固定资产导入模板')+'.csv', buildImportTemplate(isRec), 'text/csv;charset=utf-8');
+  $('#impFile').onchange = e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = ()=>{
+      try{ parseImportPreview(rd.result, isRec); }
+      catch(err){ $('#impPreview').innerHTML = '<span style="color:#e02020">解析失败：'+esc(err.message)+'</span>'; }
+    };
+    rd.readAsText(f,'utf-8');
+  };
+  $('#modalSave').onclick = ()=> doImport(isRec);
+  $('#modalMask').classList.add('on');
+}
+function normType(s, def){
+  s = (s||'').trim();
+  if(!s) return def||'expense';
+  if(/收/.test(s) && !/支/.test(s)) return 'income';
+  if(/支/.test(s)) return 'expense';
+  if(/^in/i.test(s)) return 'income';
+  if(/^ex/i.test(s)) return 'expense';
+  return def||'expense';
+}
+function parseImportPreview(text, isRec){
+  const rows = parseCSVText(text);
+  let data = rows;
+  const head0 = IMPORT_HEADS[isRec?'record':'asset'][0];
+  if(data.length && String(data[0][0]).trim()===head0) data = data.slice(1);
+  const valid=[]; const errors=[];
+  data.forEach((r,idx)=>{
+    const lineNo = idx+1+(rows.length>data.length?1:0);
+    const errs=[];
+    let rec=null;
+    if(isRec){
+      const type = normType(r[1], ui.importDefaultType);
+      const date = (r[0]||'').trim();
+      const cat = (r[2]||'').trim();
+      const amount = parseFloat(r[4]);
+      const operator = (r[5]||'').trim();
+      const brief = (r[3]||'').trim();
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) errs.push('日期格式应为 YYYY-MM-DD');
+      const cats = getCats(type).map(c=>c.name);
+      if(!cat) errs.push('类目为空');
+      else if(!cats.includes(cat)) errs.push('类目「'+cat+'」未配置');
+      if(!(amount>0)) errs.push('金额须大于 0');
+      if(!operator) errs.push('经办人为空');
+      rec = {type,category:cat,date,amount,operator,meta:{},remark:(r[7]||'').trim(),
+             voucher:(r[6]||'').trim(), purpose: type==='expense'?brief:'',
+             linkedIncomeCat:null, linkNote:'', linkedExpenseCat:null, account:'public'};
+    }else{
+      const name=(r[0]||'').trim();
+      const category=(r[1]||'').trim();
+      const date=(r[3]||'').trim();
+      const amount=parseFloat(r[4]);
+      const location=(r[6]||'').trim();
+      const custodian=(r[7]||'').trim();
+      if(!name) errs.push('资产名称为空');
+      if(!ASSET_CATS.includes(category)) errs.push('类目「'+(category||'空')+'」非法');
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) errs.push('购置日期格式应为 YYYY-MM-DD');
+      if(!(amount>=0)||isNaN(amount)) errs.push('金额须为≥0的数字');
+      if(!location) errs.push('存放地点为空');
+      if(!custodian) errs.push('保管人为空');
+      rec={name,category:ASSET_CATS.includes(category)?category:ASSET_CATS[0],spec:(r[2]||'').trim(),date,amount,
+           source:(r[5]||'').trim(),location,custodian,status:(r[8]||'在用').trim()||'在用',remark:(r[9]||'').trim()};
+    }
+    if(errs.length) errors.push({line:lineNo, errs});
+    else valid.push(rec);
+  });
+  ui.importValid = valid; ui.importErrors = errors;
+  const prev = $('#impPreview');
+  let html = `<div style="margin-bottom:8px"><b style="color:var(--ok,#1f9d55)">可导入 ${valid.length} 条</b>　<b style="color:#e02020">跳过 ${errors.length} 条</b></div>`;
+  if(valid.length){
+    const samp = valid.slice(0,5).map(v=> isRec
+      ? `<div>• ${v.date} ［${v.type==='income'?'收入':'支出'}］${esc(v.category)} ${money(v.amount)}　${esc(v.operator)}</div>`
+      : `<div>• ${esc(v.name)}（${esc(v.category)}）${money(v.amount)}　${esc(v.custodian)}</div>`).join('');
+    html += `<div class="muted" style="font-size:12.5px">预览（前 5 条）：</div>${samp}`;
+  }
+  if(errors.length){
+    const els = errors.slice(0,6).map(e=>`<div style="color:#e02020">第 ${e.line} 行：${esc(e.errs.join('；'))}</div>`).join('');
+    html += `<div class="hr"></div><div class="muted" style="font-size:12.5px">跳过原因${errors.length>6?'（前 6 条）':''}：</div>${els}`;
+  }
+  prev.innerHTML = html;
+}
+function doImport(isRec){
+  const valid = ui.importValid||[];
+  if(!valid.length) return toast('没有可导入的有效数据','err');
+  let nid = Date.now();
+  if(isRec){
+    valid.forEach(rec=>{ rec.id=nid++; rec.createdAt=Date.now(); state.records.push(rec); });
+  }else{
+    valid.forEach(rec=>{ rec.id=nid++; rec.createdAt=Date.now(); state.assets.push(rec); });
+  }
+  save();
+  if(isRec) renderAll(); else renderAssets();
+  const skip = (ui.importErrors||[]).length;
+  closeModal();
+  toast(`已导入 ${valid.length} 条${skip?('，跳过 '+skip+' 条'):''}`,'ok');
+}
+
+/* =========================================================
+   固定资产台账
+   ========================================================= */
+function fillAssetSelects(){
+  const catBox = $('#asCat'); if(catBox && !catBox.options.length){
+    catBox.innerHTML = ASSET_CATS.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  }
+  const srcBox = $('#asSource');
+  if(srcBox){
+    const cur = srcBox.value;
+    const opts = ['<option value="">— 不关联 —</option>'].concat(
+      getCats('income').map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`)
+    ).join('');
+    srcBox.innerHTML = opts; srcBox.value = cur;
+  }
+}
+function renderAssets(){
+  const list = state.assets.slice().sort((a,b)=> a.date===b.date ? b.createdAt-a.createdAt : (a.date<b.date?1:-1));
+  const total = sumOf(list);
+  const inUse = list.filter(a=>a.status==='在用').length;
+  const scrap = list.filter(a=>a.status==='报废').length;
+  $('#assetStats').innerHTML = `
+    <div class="stat bal"><div class="lbl">资产条目</div><div class="num">${list.length}</div></div>
+    <div class="stat in"><div class="lbl">资产原值合计</div><div class="num">${money(total)}</div></div>
+    <div class="stat"><div class="lbl">在用 / 报废</div><div class="num">${inUse} <span style="font-size:15px;color:var(--muted)">/ ${scrap}</span></div></div>`;
+  if(!list.length){
+    $('#assetTable').innerHTML = `<div class="empty"><span class="ic">📦</span>还没有固定资产，点击右上角「＋ 新增资产」登记第一笔</div>`;
+    return;
+  }
+  $('#assetTable').innerHTML = `<table>
+    <thead><tr>
+      <th style="width:150px">资产名称</th>
+      <th style="width:96px">类目</th>
+      <th>规格型号</th>
+      <th style="width:104px">购置日期</th>
+      <th style="width:120px;text-align:right">金额（元）</th>
+      <th>存放地点</th>
+      <th style="width:96px">保管人</th>
+      <th style="width:70px;text-align:center">状态</th>
+      <th style="width:120px;text-align:right">操作</th>
+    </tr></thead>
+    <tbody>${list.map(a=>`
+      <tr>
+        <td>${esc(a.name)}</td>
+        <td>${esc(a.category)}</td>
+        <td>${esc(a.spec||'—')}${a.source?`<span class="muted" style="font-size:12px"> · 来源 ${esc(a.source)}</span>`:''}</td>
+        <td class="mono">${esc(a.date)}</td>
+        <td class="num-cell t-in">${moneyRaw(a.amount)}</td>
+        <td>${esc(a.location||'—')}</td>
+        <td>${esc(a.custodian||'—')}</td>
+        <td style="text-align:center"><span class="tag ${a.status==='报废'?'ex':(a.status==='闲置'?'':'in')}">${esc(a.status)}</span></td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="link-btn" data-act="edit" data-aid="${a.id}">编辑</button>
+          <button class="link-btn del" data-act="del" data-aid="${a.id}">删除</button>
+        </td>
+      </tr>`).join('')}</tbody></table>`;
+  $$('#assetTable [data-act]').forEach(b=>{
+    b.onclick=()=>{
+      const id = b.dataset.aid;
+      if(b.dataset.act==='edit') editAsset(id);
+      else delAsset(id);
+    };
+  });
+}
+function resetAssetForm(){
+  $('#assetForm').reset();
+  $('#asDate').value = todayStr();
+  $('#assetFormTitle').textContent = '新增固定资产';
+  ui.editingAssetId = null;
+}
+function bindAssetForm(){
+  fillAssetSelects();
+  $('#asDate').value = todayStr();
+  $('#assetAddBtn').onclick = ()=>{ resetAssetForm(); $('#asName').focus(); window.scrollTo({top:0,behavior:'smooth'}); };
+  $('#assetReset').onclick = ()=> setTimeout(resetAssetForm,0);
+  $('#assetExport').onclick = exportAssetCSV;
+  $('#assetImport').onclick = ()=> openImportModal('asset',null);
+  $('#assetForm').onsubmit = e=>{
+    e.preventDefault();
+    if(!can('add')) return toast('无权限：仅可查看','err');
+    const name = $('#asName').value.trim();
+    const category = $('#asCat').value;
+    const date = $('#asDate').value;
+    const amount = parseFloat($('#asAmount').value);
+    const location = $('#asLoc').value.trim();
+    const custodian = $('#asCustodian').value.trim();
+    if(!name) return toast('请填写资产名称','err');
+    if(!date) return toast('请选择购置日期','err');
+    if(!(amount>=0) || isNaN(amount)) return toast('请填写正确的购置金额','err');
+    if(!location) return toast('请填写存放地点','err');
+    if(!custodian) return toast('请填写保管人 / 责任人','err');
+    const data = {
+      name, category, spec:$('#asSpec').value.trim(), date, amount,
+      source:$('#asSource').value.trim(), location, custodian,
+      status:$('#asStatus').value, remark:$('#asRemark').value.trim()
+    };
+    if(ui.editingAssetId){
+      const a = state.assets.find(x=>x.id===ui.editingAssetId);
+      if(a) Object.assign(a, data);
+      save(); renderAssets(); resetAssetForm();
+      toast('已更新资产信息','ok');
+    }else{
+      data.id = Date.now() + Math.floor(Math.random()*1000);
+      data.createdAt = Date.now();
+      state.assets.push(data);
+      save(); renderAssets(); resetAssetForm();
+      toast(`已登记：${name} ${money(amount)}`,'ok');
+    }
+  };
+}
+function editAsset(id){
+  const a = state.assets.find(x=>x.id==id);
+  if(!a) return;
+  ui.editingAssetId = a.id;
+  fillAssetSelects();
+  $('#asName').value = a.name||'';
+  $('#asCat').value = a.category||ASSET_CATS[0];
+  $('#asSpec').value = a.spec||'';
+  $('#asDate').value = a.date||todayStr();
+  $('#asAmount').value = Number(a.amount||0).toFixed(2);
+  $('#asSource').value = a.source||'';
+  $('#asLoc').value = a.location||'';
+  $('#asCustodian').value = a.custodian||'';
+  $('#asStatus').value = a.status||'在用';
+  $('#asRemark').value = a.remark||'';
+  $('#assetFormTitle').textContent = '编辑资产：' + a.name;
+  $('#nav button[data-view=asset]').click();
+  $('#asName').focus();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function delAsset(id){
+  if(!can('delete')) return toast('无权限：仅管理员可删除','err');
+  const a = state.assets.find(x=>x.id==id);
+  if(!a) return;
+  if(!confirm(`确认删除该固定资产吗？\n\n${a.name}　${a.category}　${money(a.amount)}\n\n删除后不可恢复。`)) return;
+  state.assets = state.assets.filter(x=>x.id!=id);
+  save(); renderAssets();
+  toast('已删除该资产','ok');
+}
+function exportAssetCSV(){
+  if(!state.assets.length) return toast('暂无资产可导出','err');
+  const head = ['资产名称','类目','规格型号','购置日期','金额','资金来源','存放地点','保管人','状态','备注'];
+  const rows = state.assets.map(a=>[a.name,a.category,a.spec||'',a.date,Number(a.amount).toFixed(2),a.source||'',a.location||'',a.custodian||'',a.status||'',(a.remark||'').replace(/\n/g,' ')]);
+  const csv = [head, ...rows].map(cols=>cols.map(c=>{
+    const s = String(c==null?'':c);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\r\n');
+  download(`社区固定资产台账_${todayStr()}.csv`, csv, 'text/csv;charset=utf-8');
+  toast('已导出 '+state.assets.length+' 条资产','ok');
+}
+
+/* =========================================================
+   导出 / 打印
+   ========================================================= */
+function download(filename, content, mime){
+  const blob = new Blob(['\ufeff'+content], {type: mime||'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },200);
+}
+function exportCSV(){
+  const list = filteredRecords();
+  if(!list.length) return toast('当前筛选结果为空，无可导出内容','err');
+  const head = ['日期','收支类型','类目','摘要/用途','金额','经办人','票据编号','备注'];
+  const rows = list.map(r=>[
+    r.date, r.type==='income'?'收入':'支出', r.category, briefOf(r),
+    Number(r.amount).toFixed(2), r.operator||'', r.voucher||'', (r.remark||'').replace(/\n/g,' ')
+  ]);
+  const csv = [head, ...rows].map(cols=>cols.map(c=>{
+    const s = String(c==null?'':c);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\r\n');
+  download(`社区收支明细_${todayStr()}.csv`, csv, 'text/csv;charset=utf-8');
+  toast('已导出 '+list.length+' 条明细','ok');
+}
+
+function printNode(html){
+  $('#printArea').innerHTML = html;
+  window.print();
+  setTimeout(()=>{ $('#printArea').innerHTML=''; }, 800);
+}
+function printDetail(){
+  const list = filteredRecords();
+  if(!list.length) return toast('当前筛选结果为空','err');
+  const inc = sumOf(list.filter(r=>r.type==='income'));
+  const exp = sumOf(list.filter(r=>r.type==='expense'));
+  const rows = list.map((r,i)=>`<tr>
+      <td style="text-align:center">${i+1}</td>
+      <td style="text-align:center">${esc(r.date)}</td>
+      <td style="text-align:center">${r.type==='income'?'收入':'支出'}</td>
+      <td>${esc(r.category)}</td>
+      <td>${esc(briefOf(r))}</td>
+      <td>${esc(r.operator||'')}</td>
+      <td style="text-align:right">${r.type==='income'?num2(r.amount):''}</td>
+      <td style="text-align:right">${r.type==='expense'?num2(r.amount):''}</td>
+    </tr>`).join('');
+  printNode(`
+    <div class="paper">
+      <h1>${esc(state.settings.name)} 收支明细表</h1>
+      <div style="text-align:center;font-size:13.5px;margin-bottom:14px;color:#444">
+        打印时间：${todayStr()}　共 ${list.length} 条
+      </div>
+      <table>
+        <thead><tr>
+          <th style="width:40px;text-align:center">序号</th>
+          <th style="width:92px;text-align:center">日期</th>
+          <th style="width:50px;text-align:center">类型</th>
+          <th style="width:140px">类目</th>
+          <th>摘要 / 用途</th>
+          <th style="width:70px">经办人</th>
+          <th style="width:90px;text-align:center">收入(元)</th>
+          <th style="width:90px;text-align:center">支出(元)</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr>
+          <td colspan="6" style="text-align:right;font-weight:700">合计</td>
+          <td style="text-align:right;font-weight:700">${num2(inc)}</td>
+          <td style="text-align:right;font-weight:700">${num2(exp)}</td>
+        </tr></tfoot>
+      </table>
+      <div class="li" style="margin-top:10px">收入合计 ${num2(inc)} 元，支出合计 ${num2(exp)} 元，结余 ${num2(inc-exp)} 元。</div>
+    </div>`);
+}
+
+/* =========================================================
+   类目与字段管理（管理员）
+   ========================================================= */
+function renderCatAdmin(){
+  const renderList = (type)=> getCats(type).map(c=>`
+    <div class="cat-card">
+      <div class="top">
+        <span class="ic">${c.icon}</span>
+        <span class="nm">${esc(c.name)}</span>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-sm" data-editcat="${type}::${esc(c.name)}">编辑</button>
+          <button class="btn btn-sm btn-danger" data-delcat="${type}::${esc(c.name)}">删除</button>
+        </div>
+      </div>
+      <div class="ds">${esc(c.desc||'')}</div>
+      <div class="field-list">
+        ${(c.meta||[]).length ? (c.meta.map(f=>`
+          <div class="row"><span class="k">${esc(f.key)}</span>
+            <span>${esc(f.label)}</span>
+            <span class="t">${f.type} · ${f.required?'必填':'选填'}${f.options&&f.options.length?' · 选项:'+esc(f.options.join('/')):''}</span>
+          </div>`).join(''))
+          : '<span class="muted" style="font-size:12px">无自定义字段（使用通用记账字段）</span>'}
+      </div>
+    </div>`).join('');
+  $('#catIncomeList').innerHTML  = renderList('income')  || '<div class="muted" style="font-size:13px">暂无收入类目</div>';
+  $('#catExpenseList').innerHTML = renderList('expense') || '<div class="muted" style="font-size:13px">暂无支出类目</div>';
+
+  $$('#catIncomeList [data-editcat], #catExpenseList [data-editcat]').forEach(b=>b.onclick=()=>{
+    const [t,n]=b.dataset.editcat.split('::'); openCatModal(t,n);
+  });
+  $$('#catIncomeList [data-delcat], #catExpenseList [data-delcat]').forEach(b=>b.onclick=()=>{
+    const [t,n]=b.dataset.delcat.split('::'); deleteCat(t,n);
+  });
+}
+function deleteCat(type,name){
+  if(!confirm(`确认删除类目「${name}」？\n已有账目仍会保留（归入该类目名下显示），仅不再作为记账可选项。`)) return;
+  const arr=getCats(type);
+  const i=arr.findIndex(c=>c.name===name);
+  if(i>=0) arr.splice(i,1);
+  save(); renderCatAdmin(); renderCatPickers(); fillCategoryFilter(); renderAll();
+  toast('已删除类目','ok');
+}
+function openCatModal(type, name){
+  const cats = getCats(type);
+  const cat = name? cats.find(c=>c.name===name):null;
+  ui.editCatType=type; ui.editCatName=name||'';
+  const fields = cat? (cat.meta||[]).slice() : [];
+
+  const fieldRow = (f,i)=>`
+    <div class="field-row" data-fi="${i}">
+      <div class="field"><label>字段名称</label><input type="text" data-f="label" value="${esc(f.label)}"></div>
+      <div class="field"><label>字段标识</label><input type="text" data-f="key" value="${esc(f.key)}" placeholder="字母"></div>
+      <div class="field"><label>类型</label><select data-f="type">
+        ${['text','number','select','date','month'].map(t=>`<option ${t===f.type?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="field"><label>必填</label><select data-f="required">
+        <option value="0" ${!f.required?'selected':''}>否</option><option value="1" ${f.required?'selected':''}>是</option></select></div>
+      <div class="field"><label>选项(select)</label><input type="text" data-f="options" value="${esc((f.options||[]).join(','))}" placeholder="逗号分隔"></div>
+      <button type="button" class="btn btn-danger btn-sm" data-delrow="${i}">✕</button>
+    </div>`;
+  const renderFields = ()=> fields.map((f,i)=>fieldRow(f,i)).join('');
+
+  $('#modalTitle').textContent = (name?'编辑':'新增')+(type==='income'?'收入':'支出')+'类目';
+  $('#modalBody').innerHTML = `
+    <div class="field"><label>类目名称<span class="req">*</span></label><input type="text" id="catName" value="${esc(cat?cat.name:'')}" placeholder="如：捐赠收入"></div>
+    <div class="grid g3 mt14">
+      <div class="field"><label>图标(emoji)</label><input type="text" id="catIcon" value="${esc(cat?cat.icon:'📁')}" maxlength="4"></div>
+      <div class="field"><label>公示补充说明</label><input type="text" id="catReportDesc" value="${esc(cat?reportDescOf(cat):'')}" placeholder="用于公示报表括号说明"></div>
+      <div class="field"><label>顺序</label><input type="number" id="catOrder" value="${esc(cat?(cats.indexOf(cat)+1):cats.length+1)}" min="1"></div>
+    </div>
+    <div class="field mt14"><label>类目描述</label><textarea id="catDesc" placeholder="一句话说明该类目用途">${esc(cat?cat.desc:'')}</textarea></div>
+    <div class="hr"></div>
+    <div class="flex" style="justify-content:space-between"><strong>自定义字段</strong><button type="button" class="btn btn-sm" id="catAddField">＋ 添加字段</button></div>
+    <div class="field-list mt8" id="catFields">${renderFields()}</div>
+    <div class="badge-note mt14">字段用于该类目记账时的专属录入项；「字段标识」请用字母/数字，系统据此区分各字段。收入类目通常含：拨款单位、资金用途等；支出类目默认已带通用字段，可再追加如：报销人、项目等。</div>
+  `;
+  $('#modalMask').classList.add('on');
+  $('#modalSave').style.display='';
+
+  const refresh = ()=>{ $('#catFields').innerHTML=renderFields(); bindRows(); };
+  const bindRows = ()=>{
+    $$('#catFields [data-delrow]').forEach(b=>b.onclick=()=>{
+      fields.splice(Number(b.dataset.delrow),1); refresh();
+    });
+  };
+  bindRows();
+  $('#catAddField').onclick=()=>{ fields.push({key:'f'+(fields.length+1), label:'', type:'text', required:false, options:[]}); refresh(); };
+
+  $('#modalSave').onclick=()=>{
+    const nm = $('#catName').value.trim();
+    if(!nm) return toast('请填写类目名称','err');
+    const meta=[];
+    $$('#catFields .field-row').forEach(row=>{
+      const label=row.querySelector('[data-f="label"]').value.trim();
+      let key=row.querySelector('[data-f="key"]').value.trim();
+      const type=row.querySelector('[data-f="type"]').value;
+      const required=row.querySelector('[data-f="required"]').value==='1';
+      const options=row.querySelector('[data-f="options"]').value.split(',').map(s=>s.trim()).filter(Boolean);
+      if(!label) return;                       // 跳过未命名的空行
+      if(!key) key='f'+(meta.length+1);
+      if(!/^[A-Za-z0-9_]+$/.test(key)) return toast('字段标识只能含字母、数字、下划线','err');
+      meta.push({key,label,type,required, ph:'', options});
+    });
+    const obj={ name:nm, icon:$('#catIcon').value.trim()||'📁',
+                desc:$('#catDesc').value.trim(), reportDesc:$('#catReportDesc').value.trim(),
+                meta };
+    const arr=getCats(type);
+    const idx=arr.findIndex(c=>c.name===ui.editCatName);
+    if(idx>=0) arr[idx]=obj; else arr.push(obj);
+    save(); closeModal(); renderCatAdmin(); renderCatPickers(); renderExpenseMeta(); fillCategoryFilter(); renderAll();
+    toast('类目已保存','ok');
+  };
+}
+
+/* =========================================================
+   账号管理（管理员）
+   ========================================================= */
+function renderUserAdmin(){
+  if(!$('#userTable')) return;
+  const rows = state.users.map(u=>`
+    <tr>
+      <td>${esc(u.username)}</td>
+      <td>${esc(u.name)}</td>
+      <td><span class="role-tag ${u.role}">${u.role==='admin'?'管理员':'业务员'}</span></td>
+      <td style="text-align:right">${u.username===state.session
+        ? '<span class="muted">当前登录</span>'
+        : `<button class="link-btn del" data-deluser="${esc(u.username)}">删除</button>`}</td>
+    </tr>`).join('');
+  $('#userTable').innerHTML = `<table>
+    <thead><tr><th>账号</th><th>姓名</th><th>角色</th><th style="text-align:right">操作</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+  $$('#userTable [data-deluser]').forEach(b=>b.onclick=()=>deleteUser(b.dataset.deluser));
+}
+function deleteUser(username){
+  if(username===state.session) return toast('不能删除当前登录账号','err');
+  const u=state.users.find(x=>x.username===username);
+  if(u && u.role==='admin'){
+    const admins=state.users.filter(x=>x.role==='admin');
+    if(admins.length<=1) return toast('至少保留一个管理员账号','err');
+  }
+  if(!confirm(`确认删除账号「${username}」？`)) return;
+  state.users=state.users.filter(x=>x.username!==username);
+  save(); renderUserAdmin(); toast('已删除账号','ok');
+}
+function openUserModal(){
+  $('#modalTitle').textContent='新增账号';
+  $('#modalBody').innerHTML=`
+    <div class="grid g2">
+      <div class="field"><label>账号(登录名)<span class="req">*</span></label><input type="text" id="uUser" placeholder="字母/数字"></div>
+      <div class="field"><label>姓名<span class="req">*</span></label><input type="text" id="uName" placeholder="如：王会计"></div>
+    </div>
+    <div class="grid g2 mt14">
+      <div class="field"><label>密码<span class="req">*</span></label><input type="text" id="uPass" placeholder="初始密码"></div>
+      <div class="field"><label>角色</label><select id="uRole">
+        <option value="staff">业务员（记账 / 查询）</option>
+        <option value="admin">管理员（全部权限）</option></select></div>
+    </div>
+    <div class="badge-note mt14">管理员可管理类目、自定义字段与账号；业务员仅可记账、查看明细、汇总与生成公示报表。</div>`;
+  $('#modalMask').classList.add('on');
+  $('#modalSave').style.display='';
+  $('#modalSave').onclick=()=>{
+    const username=$('#uUser').value.trim(), name=$('#uName').value.trim(), pass=$('#uPass').value, role=$('#uRole').value;
+    if(!username||!name||!pass) return toast('请完整填写账号、姓名、密码','err');
+    if(state.users.some(u=>u.username===username)) return toast('该账号已存在','err');
+    state.users.push({username,name,password:pass,role});
+    save(); closeModal(); renderUserAdmin(); toast('账号已创建','ok');
+  };
+}
+
+/* =========================================================
+   数据管理
+   ========================================================= */
+function refreshDmStat(){
+  const n = state.records.length;
+  const inc = sumOf(state.records.filter(r=>r.type==='income'));
+  const exp = sumOf(state.records.filter(r=>r.type==='expense'));
+  const el = $('#dmStat');
+  if(el) el.innerHTML = `当前共 <b>${n}</b> 笔账目　·　累计收入 <b class="t-in">${money(inc)}</b>　·　累计支出 <b class="t-ex">${money(exp)}</b>　·　结余 <b>${money(inc-exp)}</b>`;
+}
+
+/* =========================================================
+   登录 / 退出
+   ========================================================= */
+function doLogin(){
+  const u=$('#loginUser').value.trim(), p=$('#loginPass').value;
+  const user=state.users.find(x=>x.username===u && x.password===p);
+  if(!user) return toast('账号或密码错误','err');
+  state.session=u; save();
+  $('#loginMask').classList.remove('on');
+  applyRoleUI(); renderAll();
+  toast('欢迎，'+user.name,'ok');
+}
+function doLogout(){
+  state.session=null; save();
+  $('#loginMask').classList.add('on');
+  applyRoleUI();
+}
+
+/* =========================================================
+   事件绑定
+   ========================================================= */
+function bindNav(){
+  $$('#nav button').forEach(b=>{
+    b.onclick=()=>{
+      $$('#nav button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      $$('.view').forEach(v=>v.classList.remove('active'));
+      $('#view-'+b.dataset.view).classList.add('active');
+      window.scrollTo({top:0,behavior:'smooth'});
+      if(b.dataset.view==='setting'){ renderUserAdmin(); renderCatAdmin(); renderAccAdmin(); }
+      renderAll();
+    };
+  });
+  $('#dashGotoDetail').onclick = ()=> $('#nav button[data-view=detail]').click();
+}
+
+function bindForms(){
+  $('#incImport').onclick = ()=> openImportModal('record','income');
+  $('#expImport').onclick = ()=> openImportModal('record','expense');
+  // 收入
+  $('#incomeForm').onsubmit = e=>{
+    e.preventDefault();
+    if(!can('add')) return toast('无权限：仅可查看','err');
+    const cat = catByName('income',ui.incomeCat);
+    const meta = {};
+    let ok = true;
+    $$('#incomeFields [data-key]').forEach(el=>{
+      const def = cat.meta.find(f=>f.key===el.dataset.key);
+      const v = el.value.trim();
+      if(def.required && !v) ok=false;
+      meta[def.key]=v;
+    });
+    if(!ok) return toast('请填写该收入类目的必填字段','err');
+    const amount = parseFloat($('#incAmount').value);
+    if(!(amount>0)) return toast('请填写大于 0 的金额','err');
+    const operator = $('#incOperator').value.trim();
+    if(!operator) return toast('请填写经办人','err');
+    const date = $('#incDate').value;
+    if(!date) return toast('请选择入账日期','err');
+
+    // 资金进入相关专项账户（按专款专用）
+    let accKey = 'public';
+    if(cat.name==='上级拨款收入'){
+      const ac = getAccountByName((meta.purpose||'').trim());
+      accKey = ac ? ac.key : 'public';
+    } else {
+      accKey = ($('#incAccount') && $('#incAccount').value.trim()) || 'public';
+    }
+    addRecord({type:'income',category:cat.name,date,amount,operator,meta,remark:'',account:accKey});
+    e.target.reset();
+    $('#incDate').value = todayStr();
+    renderIncomeFields();
+    renderAll();
+    toast(`已保存：${cat.name} ${money(amount)}`,'ok');
+  };
+
+  // 支出
+  $('#expenseForm').onsubmit = e=>{
+    e.preventDefault();
+    if(!can('add')) return toast('无权限：仅可查看','err');
+    const cat = catByName('expense',ui.expenseCat);
+    const meta = {};
+    $$('#expenseMetaFields [data-key]').forEach(el=>{ meta[el.dataset.key]=el.value.trim(); });
+    const amount = parseFloat($('#expAmount').value);
+    const date = $('#expDate').value;
+    const purpose = $('#expPurpose').value.trim();
+    const operator = $('#expOperator').value.trim();
+    if(!date) return toast('请选择支出日期','err');
+    if(!(amount>0)) return toast('请填写大于 0 的金额','err');
+    if(!purpose) return toast('请填写用途说明','err');
+    if(!operator) return toast('请填写经办人','err');
+
+    const expAccSel = $('#expAccount').value.trim();
+    const linkCat = (expAccSel && allAccounts().some(a=>a.key===expAccSel)) ? expAccSel : 'public';
+    const linkedCat = $('#expLinkedCat').value.trim() || null;
+    if(!linkedCat) return toast('请选择关联支出科目','err');
+    addRecord({
+      type:'expense', category:cat.name, date, amount, meta,
+      purpose, voucher:$('#expVoucher').value.trim(),
+      operator, remark:$('#expRemark').value.trim(),
+      account: linkCat,
+      linkedExpenseCat: linkedCat
+    });
+    e.target.reset();
+    $('#expDate').value = todayStr();
+    $('#expAccountInfo').innerHTML = '';
+    renderAll();
+    toast(`已保存：${cat.name} ${money(amount)}`,'ok');
+  };
+  $('#expAccount').onchange = onExpenseAccountChange;
+  $('#expAmount').addEventListener('input', onExpenseAccountChange);
+  $('#expLinkedCat').onchange = onExpenseLinkedCatChange;
+  const ep = $('#expPurpose');
+  if(ep) ep.addEventListener('input', autoMatchExpenseAccount);
+}
+
+function bindFilters(){
+  ['fKeyword','fType','fCategory','fFrom','fTo'].forEach(id=>{
+    const el = $('#'+id);
+    el.addEventListener(id==='fKeyword'?'input':'change', ()=>{
+      if(id!=='fKeyword') clearQuick();
+      renderDetail();
+    });
+  });
+  $('#fReset').onclick = ()=>{
+    $('#fKeyword').value=''; $('#fType').value=''; $('#fCategory').value='';
+    $('#fFrom').value=''; $('#fTo').value=''; clearQuick();
+    renderDetail();
+  };
+  $$('#quickRange .chip').forEach(c=>{
+    c.onclick = ()=>{
+      const q = c.dataset.q;
+      if(q==='all'){ $('#fFrom').value=''; $('#fTo').value=''; }
+      else{ const rg = rangeOf(q); $('#fFrom').value=rg.from; $('#fTo').value=rg.to; }
+      $$('#quickRange .chip').forEach(x=>x.classList.toggle('on', x===c));
+      renderDetail();
+    };
+  });
+  $('#dImport').onclick = ()=> openImportModal('record',null);
+  $('#dExport').onclick = exportCSV;
+  $('#dPrint').onclick = printDetail;
+
+  $$('#dashPeriod .chip').forEach(c=>{
+    c.onclick = ()=>{ ui.dashPeriod = c.dataset.period; renderDashboard(); };
+  });
+}
+function clearQuick(){ $$('#quickRange .chip').forEach(x=>x.classList.remove('on')); }
+
+function bindSummary(){
+}
+
+function bindReport(){
+  $('#rpGenerate').onclick = ()=>{ renderReport(); toast('公示报表已生成','ok'); };
+  $('#rpPrint').onclick = ()=>{
+    const html = $('#reportPaper').innerHTML;
+    if(html.includes('请选择年份')) return toast('请先生成公示报表','err');
+    printNode('<div class="paper">'+html+'</div>');
+  };
+  $('#rpCopy').onclick = async ()=>{
+    const txt = reportPlainText();
+    try{
+      await navigator.clipboard.writeText(txt);
+      toast('文字版已复制到剪贴板','ok');
+    }catch(e){
+      const ta=document.createElement('textarea'); ta.value=txt;
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); toast('文字版已复制到剪贴板','ok'); }
+      catch(_){ toast('复制失败，请手动选择文本','err'); }
+      ta.remove();
+    }
+  };
+}
+
+function bindSetting(){
+  $('#stSave').onclick = ()=>{
+    state.settings.name   = $('#stName').value.trim() || 'XX 社区';
+    state.settings.signer = $('#stSigner').value.trim() || state.settings.name+'居委会';
+    state.settings.days   = Math.max(1, parseInt($('#stDays').value)||7);
+    save(); applySettings();
+    toast('设置已保存','ok');
+  };
+  $('#dmExport').onclick = ()=>{
+    download(`社区财务数据备份_${todayStr()}.json`, JSON.stringify(state,null,2), 'application/json');
+    toast('已导出数据备份','ok');
+  };
+  $('#dmImport').onclick = ()=> $('#dmFile').click();
+  $('#dmFile').onchange = e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = ()=>{
+      try{
+        const d = JSON.parse(rd.result);
+        if(!Array.isArray(d.records)) throw new Error('格式不正确');
+        if(!confirm(`导入将覆盖当前 ${state.records.length} 笔账目，确认继续？`)) return;
+        state.records = d.records;
+        state.settings = Object.assign(state.settings, d.settings||{});
+        if(Array.isArray(d.users)&&d.users.length) state.users=d.users;
+        if(d.categories&&Array.isArray(d.categories.income)) state.categories.income=d.categories.income;
+        if(d.categories&&Array.isArray(d.categories.expense)) state.categories.expense=d.categories.expense;
+        save(); applySettings(); renderUserAdmin(); renderCatAdmin(); renderCatPickers(); renderExpenseMeta(); fillYearSelects(); fillCategoryFilter(); renderAll();
+        toast('数据导入成功','ok');
+      }catch(err){ toast('导入失败：文件格式不正确','err'); }
+      e.target.value='';
+    };
+    rd.readAsText(f,'utf-8');
+  };
+  $('#dmDemo').onclick = ()=>{
+    if(state.records.length && !confirm('载入演示数据会覆盖当前全部账目，确认继续？')) return;
+    state.records = demoData();
+    save(); fillYearSelects(); renderAll();
+    toast('演示数据已载入','ok');
+  };
+  $('#dmClear').onclick = ()=>{
+    if(!state.records.length) return toast('当前没有账目');
+    if(!confirm(`确认清空全部 ${state.records.length} 笔账目？此操作不可恢复，建议先导出备份。`)) return;
+    state.records = []; save(); fillYearSelects(); renderAll();
+    toast('已清空全部账目','ok');
+  };
+
+  // 类目管理
+  $('#catAddIncome').onclick  = ()=>openCatModal('income');
+  $('#catAddExpense').onclick = ()=>openCatModal('expense');
+  // 专项账户管理
+  $('#accAdd').onclick = ()=>openAccModal(null);
+  // 账号管理
+  $('#btnAddUser').onclick = openUserModal;
+}
+
+function bindModal(){
+  $('#modalClose').onclick = closeModal;
+  $('#modalCancel').onclick = closeModal;
+  $('#modalSave').onclick = saveEdit;
+  $('#modalMask').onclick = e=>{ if(e.target===$('#modalMask')) closeModal(); };
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+}
+
+function bindAuth(){
+  $('#loginBtn').onclick = doLogin;
+  $('#loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+  $('#loginUser').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+  $('#btnLogout').onclick = doLogout;
+}
+
+/* =========================================================
+   全局渲染
+   ========================================================= */
+function applySettings(){
+  $('#tagCommunity').textContent = state.settings.name;
+  $('#stName').value = state.settings.name;
+  $('#stSigner').value = state.settings.signer;
+  $('#stDays').value = state.settings.days;
+  document.title = `${state.settings.name} · 社区简易财务管理平台`;
+}
+function fillCategoryFilter(){
+  const opts = ['<option value="">全部类目</option>'];
+  opts.push('<optgroup label="收入">');
+  getCats('income').forEach(c=>opts.push(`<option value="${esc(c.name)}">${esc(c.name)}</option>`));
+  opts.push('</optgroup><optgroup label="支出">');
+  getCats('expense').forEach(c=>opts.push(`<option value="${esc(c.name)}">${esc(c.name)}</option>`));
+  opts.push('</optgroup>');
+  const cur = $('#fCategory').value;
+  $('#fCategory').innerHTML = opts.join('');
+  $('#fCategory').value = cur;
+}
+function renderAll(){
+  fillExpenseAccount();
+  fillExpenseLinkedCat();
+  renderDashboard();
+  renderIncomeRecent();
+  renderExpenseRecent();
+  renderDetail();
+  renderAssets();
+  renderAccAdmin();
+  refreshDmStat();
+}
+
+/* ---------- 启动 ---------- */
+function pickLatestReportPeriod(){
+  const now = new Date();
+  let y = now.getFullYear(), q = quarterOf(todayStr());
+  if(state.records.length){
+    const latest = state.records.slice().sort((a,b)=> a.date<b.date?1:-1)[0];
+    if(latest && latest.date){
+      y = Number(latest.date.slice(0,4));
+      q = quarterOf(latest.date) || q;
+    }
+  }
+  $('#rpYear').value = String(y);
+  $('#rpQuarter').value = String(q);
+}
+
+(function init(){
+  const loaded = load();
+  if(!loaded){                       // 首次运行：写入演示数据
+    state.records = demoData();
+    state.assets  = demoAssets();
+    save();
+  }
+  // 当前类目选中项跟随数据
+  if(getCats('income').length)  ui.incomeCat  = getCats('income')[0].name;
+  if(getCats('expense').length) ui.expenseCat = getCats('expense')[0].name;
+
+  applySettings();
+  applyRoleUI();
+  bindNav(); bindForms(); bindFilters(); bindSummary(); bindReport(); bindSetting(); bindModal(); bindAuth(); bindAssetForm();
+  renderCatPickers();
+  renderIncomeFields();
+  renderExpenseMeta();
+  fillYearSelects();
+  fillCategoryFilter();
+
+  $('#incDate').value = todayStr();
+  $('#expDate').value = todayStr();
+  bindQuickAmount('#expenseForm input[name=amount]');
+  pickLatestReportPeriod();
+
+  renderAll();
+  renderReport();
+  renderUserAdmin();
+  renderCatAdmin();
+
+  if(!currentUser()){ $('#loginMask').classList.add('on'); }
+})();
+</script>
+</body>
+</html>
